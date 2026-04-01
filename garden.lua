@@ -1,250 +1,334 @@
--- MALOT TROLL SCRIPT v1.0 ДЛЯ BROOKHAVEN — ПОЛНЫЙ ТРОЛЛИНГ 2026
--- Невидимость + fly + noclip + annoy + fake death и т.д.
+-- MALOT UNIVERSAL CHEAT v5.0 iOS STYLE — КРАСИВОЕ МЕНЮ КАК НА iPHONE
+-- Невидимость + Fly + Speed + Noclip + Infinite Jump + God Mode
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 local StarterGui = game:GetService("StarterGui")
 
 local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
-local root = character:WaitForChild("HumanoidRootPart")
+local camera = workspace.CurrentCamera
 
-local invisible = false
-local flyEnabled = false
-local noclipEnabled = false
-local infiniteJump = false
-local superSpeed = 120
-local annoyEnabled = false
-local fakeDead = false
+local character, humanoid, rootPart
+local speedValue = 160
+local jumpPowerValue = 220
+local flySpeed = 75
 
--- Авто-реаттач
-player.CharacterAdded:Connect(function(newChar)
-    character = newChar
-    humanoid = newChar:WaitForChild("Humanoid")
-    root = newChar:WaitForChild("HumanoidRootPart")
-end)
+local states = {
+    invisible = false,
+    fly = false,
+    noclip = false,
+    infiniteJump = false,
+    godMode = true,
+    safeSpeed = true
+}
 
--- ==================== GUI ====================
+local function setupCharacter()
+    character = player.Character or player.CharacterAdded:Wait()
+    humanoid = character:WaitForChild("Humanoid")
+    rootPart = character:WaitForChild("HumanoidRootPart")
+end
+setupCharacter()
+player.CharacterAdded:Connect(setupCharacter)
+
+-- ==================== iOS СТИЛЬ GUI ====================
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "MalotTrollBrookhaven"
+screenGui.Name = "MalotIOSUniversal"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 380, 0, 520)
-mainFrame.Position = UDim2.new(0.5, -190, 0.5, -260)
-mainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+mainFrame.Size = UDim2.new(0, 380, 0, 620)
+mainFrame.Position = UDim2.new(0.5, -190, 0.5, -310)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 mainFrame.BorderSizePixel = 0
+mainFrame.BackgroundTransparency = 0.05
+mainFrame.ClipsDescendants = true
 mainFrame.Active = true
 mainFrame.Draggable = true
 mainFrame.Parent = screenGui
 
-local title = Instance.new("Frame")
-title.Size = UDim2.new(1,0,0,45)
-title.BackgroundColor3 = Color3.fromRGB(255, 0, 100)
-title.Parent = mainFrame
+-- Blur эффект (стекло как в iOS)
+local blurCorner = Instance.new("UICorner")
+blurCorner.CornerRadius = UDim.new(0, 28)
+blurCorner.Parent = mainFrame
 
-local titleText = Instance.new("TextLabel")
-titleText.Size = UDim2.new(1,-90,1,0)
-titleText.Position = UDim2.new(0,15,0,0)
-titleText.BackgroundTransparency = 1
-titleText.Text = "MALOT ТРОЛЛЬ v1.0 — BROOKHAVEN"
-titleText.TextColor3 = Color3.new(1,1,1)
-titleText.TextScaled = true
-titleText.Font = Enum.Font.GothamBlack
-titleText.Parent = title
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(100, 200, 255)
+stroke.Thickness = 1.5
+stroke.Transparency = 0.6
+stroke.Parent = mainFrame
 
+local titleBar = Instance.new("Frame")
+titleBar.Size = UDim2.new(1, 0, 0, 60)
+titleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+titleBar.BorderSizePixel = 0
+titleBar.Parent = mainFrame
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 28)
+titleCorner.Parent = titleBar
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, -120, 1, 0)
+titleLabel.Position = UDim2.new(0, 25, 0, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "MALOT UNIVERSAL"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextScaled = true
+titleLabel.Font = Enum.Font.GothamBlack
+titleLabel.Parent = titleBar
+
+local versionLabel = Instance.new("TextLabel")
+versionLabel.Text = "v5.0 iOS"
+versionLabel.Position = UDim2.new(1, -110, 0, 18)
+versionLabel.Size = UDim2.new(0, 80, 0, 20)
+versionLabel.BackgroundTransparency = 1
+versionLabel.TextColor3 = Color3.fromRGB(150, 220, 255)
+versionLabel.TextScaled = true
+versionLabel.Font = Enum.Font.Gotham
+versionLabel.Parent = titleBar
+
+-- Кнопки управления
 local minBtn = Instance.new("TextButton")
-minBtn.Size = UDim2.new(0,40,0,40)
-minBtn.Position = UDim2.new(1,-85,0,0)
-minBtn.BackgroundColor3 = Color3.fromRGB(0,200,0)
+minBtn.Size = UDim2.new(0, 50, 0, 50)
+minBtn.Position = UDim2.new(1, -105, 0, 5)
+minBtn.BackgroundTransparency = 1
 minBtn.Text = "–"
-minBtn.TextColor3 = Color3.new(1,1,1)
-minBtn.Parent = title
+minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+minBtn.TextScaled = true
+minBtn.Font = Enum.Font.GothamBold
+minBtn.Parent = titleBar
 
 local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0,40,0,40)
-closeBtn.Position = UDim2.new(1,-40,0,0)
-closeBtn.BackgroundColor3 = Color3.fromRGB(200,0,0)
-closeBtn.Text = "X"
-closeBtn.TextColor3 = Color3.new(1,1,1)
-closeBtn.Parent = title
+closeBtn.Size = UDim2.new(0, 50, 0, 50)
+closeBtn.Position = UDim2.new(1, -50, 0, 5)
+closeBtn.BackgroundTransparency = 1
+closeBtn.Text = "✕"
+closeBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
+closeBtn.TextScaled = true
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.Parent = titleBar
 
-local content = Instance.new("Frame")
-content.Size = UDim2.new(1,0,1,-45)
-content.Position = UDim2.new(0,0,0,45)
+local content = Instance.new("ScrollingFrame")
+content.Size = UDim2.new(1, -20, 1, -80)
+content.Position = UDim2.new(0, 10, 0, 70)
 content.BackgroundTransparency = 1
+content.ScrollBarThickness = 4
+content.ScrollBarImageColor3 = Color3.fromRGB(100, 200, 255)
+content.CanvasSize = UDim2.new(0, 0, 0, 680)
 content.Parent = mainFrame
 
--- Функция тоггла
-local function addToggle(txt, y, default, callback)
-    local f = Instance.new("Frame")
-    f.Size = UDim2.new(0,340,0,40)
-    f.Position = UDim2.new(0,20,0,y)
-    f.BackgroundTransparency = 1
-    f.Parent = content
+local listLayout = Instance.new("UIListLayout")
+listLayout.Padding = UDim.new(0, 12)
+listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+listLayout.Parent = content
 
-    local lbl = Instance.new("TextLabel")
-    lbl.Text = txt
-    lbl.Size = UDim2.new(0,200,1,0)
-    lbl.BackgroundTransparency = 1
-    lbl.TextColor3 = Color3.new(1,1,1)
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Parent = f
+-- Функция создания стильного тоггла iOS
+local function createIOSToggle(name, default, callback)
+    local toggleFrame = Instance.new("Frame")
+    toggleFrame.Size = UDim2.new(1, -20, 0, 70)
+    toggleFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    toggleFrame.BorderSizePixel = 0
+    toggleFrame.Parent = content
 
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0,120,1,0)
-    btn.Position = UDim2.new(0,220,0,0)
-    btn.BackgroundColor3 = default and Color3.fromRGB(0,200,0) or Color3.fromRGB(80,80,80)
-    btn.Text = default and "ВКЛ" or "ВЫКЛ"
-    btn.TextColor3 = Color3.new(1,1,1)
-    btn.Parent = f
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 18)
+    corner.Parent = toggleFrame
 
-    local state = default
-    btn.MouseButton1Click:Connect(function()
-        state = not state
-        btn.BackgroundColor3 = state and Color3.fromRGB(0,200,0) or Color3.fromRGB(80,80,80)
-        btn.Text = state and "ВКЛ" or "ВЫКЛ"
-        callback(state)
+    local stroke2 = Instance.new("UIStroke")
+    stroke2.Color = Color3.fromRGB(80, 180, 255)
+    stroke2.Thickness = 1
+    stroke2.Transparency = 0.7
+    stroke2.Parent = toggleFrame
+
+    local label = Instance.new("TextLabel")
+    label.Text = name
+    label.Position = UDim2.new(0, 25, 0.5, -12)
+    label.Size = UDim2.new(0.6, 0, 0, 24)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextScaled = true
+    label.Font = Enum.Font.GothamSemibold
+    label.Parent = toggleFrame
+
+    local switch = Instance.new("Frame")
+    switch.Size = UDim2.new(0, 52, 0, 32)
+    switch.Position = UDim2.new(1, -75, 0.5, -16)
+    switch.BackgroundColor3 = default and Color3.fromRGB(0, 200, 120) or Color3.fromRGB(80, 80, 90)
+    switch.Parent = toggleFrame
+
+    local switchCorner = Instance.new("UICorner")
+    switchCorner.CornerRadius = UDim.new(1, 0)
+    switchCorner.Parent = switch
+
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.new(0, 26, 0, 26)
+    knob.Position = default and UDim2.new(1, -30, 0.5, -13) or UDim2.new(0, 3, 0.5, -13)
+    knob.BackgroundColor3 = Color3.new(1,1,1)
+    knob.Parent = switch
+
+    local knobCorner = Instance.new("UICorner")
+    knobCorner.CornerRadius = UDim.new(1, 0)
+    knobCorner.Parent = knob
+
+    local enabled = default
+    switch.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        callback(enabled)
+
+        local tweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Quint)
+        TweenService:Create(switch, tweenInfo, {BackgroundColor3 = enabled and Color3.fromRGB(0, 200, 120) or Color3.fromRGB(80, 80, 90)}):Play()
+        TweenService:Create(knob, tweenInfo, {Position = enabled and UDim2.new(1, -30, 0.5, -13) or UDim2.new(0, 3, 0.5, -13)}):Play()
     end)
 end
 
-addToggle("Полная Невидимость", 20, false, function(v) invisible = v end)
-addToggle("Fly (полёт)", 70, false, function(v) flyEnabled = v end)
-addToggle("Noclip (сквозь всё)", 120, false, function(v) noclipEnabled = v end)
-addToggle("Бесконечный прыжок", 170, false, function(v) infiniteJump = v end)
-addToggle("Annoy Mode (толкать игроков)", 220, false, function(v) annoyEnabled = v end)
-addToggle("Fake Dead (притвориться мёртвым)", 270, false, function(v) fakeDead = v end)
+-- Создаём тогглы в iOS стиле
+createIOSToggle("Невидимость", false, function(v) states.invisible = v end)
+createIOSToggle("Полёт (Fly)", false, function(v) states.fly = v end)
+createIOSToggle("Noclip (сквозь стены)", false, function(v) states.noclip = v end)
+createIOSToggle("Бесконечный прыжок", false, function(v) states.infiniteJump = v end)
+createIOSToggle("Режим Бога", true, function(v) states.godMode = v end)
+createIOSToggle("Safe CFrame Speed", true, function(v) states.safeSpeed = v end)
 
--- Пресет супер скорости
-local speedBtn = Instance.new("TextButton")
-speedBtn.Text = "Супер скорость 300"
-speedBtn.Position = UDim2.new(0,20,0,330)
-speedBtn.Size = UDim2.new(0,340,0,40)
-speedBtn.BackgroundColor3 = Color3.fromRGB(255,100,0)
-speedBtn.TextColor3 = Color3.new(1,1,1)
-speedBtn.Parent = content
-speedBtn.MouseButton1Click:Connect(function()
-    superSpeed = 300
-end)
+-- Скорость и прыжок с красивыми полями
+local function createValueInput(title, default, yOffset, onChange)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, -20, 0, 80)
+    frame.Position = UDim2.new(0, 10, 0, yOffset)
+    frame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    frame.Parent = content
 
--- Логика невидимости (самая мощная версия 2026)
-local function setInvisible(state)
-    if not character then return end
-    for _, v in ipairs(character:GetDescendants()) do
-        if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
-            v.Transparency = state and 1 or 0
-        elseif v:IsA("Decal") or v:IsA("Texture") then
-            v.Transparency = state and 1 or 0
-        end
-    end
-    if character:FindFirstChild("Head") and character.Head:FindFirstChild("face") then
-        character.Head.face.Transparency = state and 1 or 0
-    end
-    -- Скрываем имя и чат
-    if player:FindFirstChild("PlayerGui") then
-        for _, gui in ipairs(player.PlayerGui:GetDescendants()) do
-            if gui:IsA("BillboardGui") or gui.Name == "NameGui" then
-                gui.Enabled = not state
-            end
-        end
-    end
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 18)
+    corner.Parent = frame
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Text = title
+    lbl.Position = UDim2.new(0, 25, 0, 12)
+    lbl.Size = UDim2.new(0.6, 0, 0, 25)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Color3.new(1,1,1)
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.TextScaled = true
+    lbl.Font = Enum.Font.GothamSemibold
+    lbl.Parent = frame
+
+    local box = Instance.new("TextBox")
+    box.Text = tostring(default)
+    box.Position = UDim2.new(0.65, 0, 0.5, -18)
+    box.Size = UDim2.new(0.3, 0, 0, 36)
+    box.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    box.TextColor3 = Color3.fromRGB(0, 220, 255)
+    box.TextScaled = true
+    box.Font = Enum.Font.GothamBold
+    box.Parent = frame
+
+    local boxCorner = Instance.new("UICorner")
+    boxCorner.CornerRadius = UDim.new(0, 12)
+    boxCorner.Parent = box
+
+    box.FocusLost:Connect(function()
+        local val = tonumber(box.Text)
+        if val then onChange(val) end
+    end)
 end
 
--- Главный loop
-RunService.RenderStepped:Connect(function()
-    if not character or not root then return end
+createValueInput("Скорость бега", speedValue, 520, function(v) speedValue = v end)
+createValueInput("Сила прыжка", jumpPowerValue, 610, function(v) jumpPowerValue = v end)
+
+-- Логика читов (та же, что в v4, но чуть оптимизирована)
+UserInputService.JumpRequest:Connect(function()
+    if states.infiniteJump and humanoid then
+        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+local flyVel = nil
+
+RunService.Heartbeat:Connect(function(dt)
+    if not character or not rootPart or not humanoid then return end
+
+    if states.godMode then
+        humanoid.Health = 10000
+        humanoid.MaxHealth = 10000
+    end
+
+    humanoid.WalkSpeed = speedValue
+    humanoid.JumpPower = jumpPowerValue
 
     -- Невидимость
-    if invisible then
-        setInvisible(true)
+    if states.invisible then
+        for _, v in ipairs(character:GetDescendants()) do
+            if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then v.Transparency = 1
+            elseif v:IsA("Decal") or v:IsA("Texture") then v.Transparency = 1 end
+        end
     else
-        setInvisible(false)
+        for _, v in ipairs(character:GetDescendants()) do
+            if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then v.Transparency = 0
+            elseif v:IsA("Decal") or v:IsA("Texture") then v.Transparency = 0 end
+        end
     end
 
     -- Fly
-    if flyEnabled then
-        local dir = Vector3.new(0,0,0)
-        local cam = workspace.CurrentCamera.CFrame
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir = dir + cam.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir = dir - cam.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir = dir - cam.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir = dir + cam.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0,1,0) end
-        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then dir = dir - Vector3.new(0,1,0) end
-        root.CFrame = root.CFrame + dir.Unit * 2
-        root.Velocity = Vector3.new(0,0,0)
+    if states.fly then
+        if not flyVel then
+            flyVel = Instance.new("BodyVelocity")
+            flyVel.MaxForce = Vector3.new(4000,4000,4000)
+            flyVel.Parent = rootPart
+        end
+        local dir = Vector3.new()
+        local cf = camera.CFrame
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir += cf.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir -= cf.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir -= cf.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir += cf.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir += Vector3.new(0,1,0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then dir -= Vector3.new(0,1,0) end
+        flyVel.Velocity = dir.Unit * flySpeed
+    elseif flyVel then
+        flyVel:Destroy()
+        flyVel = nil
     end
 
-    -- Noclip
-    if noclipEnabled then
+    if states.noclip then
         for _, part in ipairs(character:GetDescendants()) do
             if part:IsA("BasePart") then part.CanCollide = false end
         end
     end
 
-    -- Annoy mode (толкаем ближайшего)
-    if annoyEnabled then
-        local closest = nil
-        local minDist = math.huge
-        for _, plr in ipairs(Players:GetPlayers()) do
-            if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-                local dist = (plr.Character.HumanoidRootPart.Position - root.Position).Magnitude
-                if dist < minDist then
-                    minDist = dist
-                    closest = plr.Character.HumanoidRootPart
-                end
-            end
-        end
-        if closest and minDist < 30 then
-            closest.Velocity = (closest.Position - root.Position).Unit * 150
-        end
-    end
-
-    -- Fake Dead
-    if fakeDead and humanoid then
-        humanoid.PlatformStand = true
-        humanoid:ChangeState(Enum.HumanoidStateType.Physics)
-    elseif humanoid then
-        humanoid.PlatformStand = false
-    end
-
-    -- Супер скорость
-    if humanoid then
-        humanoid.WalkSpeed = superSpeed
-    end
-end)
-
--- Infinite Jump
-UserInputService.JumpRequest:Connect(function()
-    if infiniteJump and humanoid then
-        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    if states.safeSpeed and humanoid.MoveDirection.Magnitude > 0 then
+        local move = humanoid.MoveDirection * speedValue * dt * 3.5
+        rootPart.CFrame += move
     end
 end)
 
 -- Управление меню
+local minimized = false
 minBtn.MouseButton1Click:Connect(function()
-    content.Visible = not content.Visible
-    mainFrame.Size = content.Visible and UDim2.new(0,380,0,520) or UDim2.new(0,380,0,45)
-    minBtn.Text = content.Visible and "–" or "+"
+    minimized = not minimized
+    local targetSize = minimized and UDim2.new(0,380,0,60) or UDim2.new(0,380,0,620)
+    TweenService:Create(mainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quint), {Size = targetSize}):Play()
+    content.Visible = not minimized
+    minBtn.Text = minimized and "＋" or "–"
 end)
 
 closeBtn.MouseButton1Click:Connect(function()
     screenGui.Enabled = false
 end)
 
-UserInputService.InputBegan:Connect(function(inp)
-    if inp.KeyCode == Enum.KeyCode.RightShift then
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.RightShift then
         screenGui.Enabled = not screenGui.Enabled
     end
 end)
 
 StarterGui:SetCore("SendNotification", {
-    Title = "MALOT ТРОЛЛЬ v1.0",
-    Text = "Brookhaven готов к троллингу! RightShift — меню. Становись невидимым и беси всех!",
-    Duration = 8
+    Title = "MALOT iOS v5.0",
+    Text = "Красивое меню загружено! RightShift для открытия. Наслаждайся премиум-дизайном!",
+    Duration = 6
 })
 
-print("[MALOT] Троллинг-скрипт для Brookhaven загружен. Удачного троллинга!")
+print("[MALOT] UNIVERSAL v5.0 iOS STYLE ЗАГРУЖЕН — теперь меню выглядит как топовое приложение!")
