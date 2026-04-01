@@ -1,9 +1,9 @@
--- MALOT UNIVERSAL CHEAT v5.3 PERFECT iOS — ФУНКЦИИ ВИДНЫ СРАЗУ, МЕНЮ ДВИГАЕТСЯ ИДЕАЛЬНО
+-- MALOT UNIVERSAL CHEAT v5.4 COMPACT — ИСПРАВЛЕНО ВСЁ
+-- Меню маленькое, функции видны всегда, тогглы работают, ничего не включается само
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 local StarterGui = game:GetService("StarterGui")
 
 local player = Players.LocalPlayer
@@ -19,8 +19,8 @@ local states = {
     fly = false,
     noclip = false,
     infiniteJump = false,
-    godMode = true,
-    safeSpeed = true
+    godMode = false,
+    safeSpeed = false
 }
 
 local function setupCharacter()
@@ -31,43 +31,43 @@ end
 setupCharacter()
 player.CharacterAdded:Connect(setupCharacter)
 
--- ==================== GUI v5.3 ====================
+-- ==================== КОМПАКТНОЕ iOS МЕНЮ ====================
 local screenGui = Instance.new("ScreenGui")
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 410, 0, 720)
-mainFrame.Position = UDim2.new(0.5, -205, 0.25, 0)
-mainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 26)
+mainFrame.Size = UDim2.new(0, 380, 0, 520)
+mainFrame.Position = UDim2.new(0.5, -190, 0.5, -260)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
 mainFrame.Draggable = true
 mainFrame.Parent = screenGui
 
-local mainCorner = Instance.new("UICorner")
-mainCorner.CornerRadius = UDim.new(0, 34)
-mainCorner.Parent = mainFrame
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 26)
+corner.Parent = mainFrame
 
 local stroke = Instance.new("UIStroke")
 stroke.Color = Color3.fromRGB(100, 200, 255)
-stroke.Thickness = 2.8
+stroke.Thickness = 2
 stroke.Parent = mainFrame
 
 -- Заголовок
 local titleBar = Instance.new("Frame")
-titleBar.Size = UDim2.new(1, 0, 0, 72)
-titleBar.BackgroundColor3 = Color3.fromRGB(26, 26, 38)
+titleBar.Size = UDim2.new(1, 0, 0, 55)
+titleBar.BackgroundColor3 = Color3.fromRGB(28, 28, 40)
 titleBar.Parent = mainFrame
 
 local titleCorner = Instance.new("UICorner")
-titleCorner.CornerRadius = UDim.new(0, 34)
+titleCorner.CornerRadius = UDim.new(0, 26)
 titleCorner.Parent = titleBar
 
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Text = "MALOT UNIVERSAL"
-titleLabel.Size = UDim2.new(1, -160, 1, 0)
-titleLabel.Position = UDim2.new(0, 30, 0, 0)
+titleLabel.Size = UDim2.new(1, -120, 1, 0)
+titleLabel.Position = UDim2.new(0, 20, 0, 0)
 titleLabel.BackgroundTransparency = 1
 titleLabel.TextColor3 = Color3.new(1,1,1)
 titleLabel.TextScaled = true
@@ -75,152 +75,126 @@ titleLabel.Font = Enum.Font.GothamBlack
 titleLabel.Parent = titleBar
 
 local versionLabel = Instance.new("TextLabel")
-versionLabel.Text = "v5.3"
-versionLabel.Position = UDim2.new(1, -130, 0.5, -14)
-versionLabel.Size = UDim2.new(0, 100, 0, 28)
+versionLabel.Text = "v5.4"
+versionLabel.Position = UDim2.new(1, -105, 0.5, -12)
+versionLabel.Size = UDim2.new(0, 80, 0, 24)
 versionLabel.BackgroundTransparency = 1
-versionLabel.TextColor3 = Color3.fromRGB(140, 240, 255)
+versionLabel.TextColor3 = Color3.fromRGB(130, 230, 255)
 versionLabel.TextScaled = true
-versionLabel.Font = Enum.Font.GothamSemibold
+versionLabel.Font = Enum.Font.Gotham
 versionLabel.Parent = titleBar
 
--- Кнопки управления
-local minBtn = Instance.new("TextButton")
-minBtn.Size = UDim2.new(0, 65, 0, 65)
-minBtn.Position = UDim2.new(1, -135, 0, 4)
-minBtn.BackgroundTransparency = 1
-minBtn.Text = "–"
-minBtn.TextColor3 = Color3.new(1,1,1)
-minBtn.TextScaled = true
-minBtn.Font = Enum.Font.GothamBold
-minBtn.Parent = titleBar
-
+-- Кнопки
 local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 65, 0, 65)
-closeBtn.Position = UDim2.new(1, -65, 0, 4)
+closeBtn.Size = UDim2.new(0, 50, 0, 50)
+closeBtn.Position = UDim2.new(1, -55, 0, 3)
 closeBtn.BackgroundTransparency = 1
 closeBtn.Text = "✕"
-closeBtn.TextColor3 = Color3.fromRGB(255, 85, 85)
+closeBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
 closeBtn.TextScaled = true
 closeBtn.Font = Enum.Font.GothamBold
 closeBtn.Parent = titleBar
 
--- ScrollingFrame — теперь функции видны сразу
-local scrollFrame = Instance.new("ScrollingFrame")
-scrollFrame.Size = UDim2.new(1, -30, 1, -95)
-scrollFrame.Position = UDim2.new(0, 15, 0, 82)
-scrollFrame.BackgroundTransparency = 1
-scrollFrame.ScrollBarThickness = 5
-scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(110, 220, 255)
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 950)
-scrollFrame.Parent = mainFrame
+-- Контент (без скролла — всё помещается)
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(1, -20, 1, -70)
+contentFrame.Position = UDim2.new(0, 10, 0, 65)
+contentFrame.BackgroundTransparency = 1
+contentFrame.Parent = mainFrame
 
-local uiList = Instance.new("UIListLayout")
-uiList.Padding = UDim.new(0, 16)
-uiList.SortOrder = Enum.SortOrder.LayoutOrder
-uiList.Parent = scrollFrame
+local layout = Instance.new("UIListLayout")
+layout.Padding = UDim.new(0, 10)
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Parent = contentFrame
 
--- Функция создания тоггла
-local function createToggle(text, default, callback)
-    local toggleFrame = Instance.new("Frame")
-    toggleFrame.Size = UDim2.new(1, -12, 0, 82)
-    toggleFrame.BackgroundColor3 = Color3.fromRGB(34, 34, 46)
-    toggleFrame.BorderSizePixel = 0
-    toggleFrame.Parent = scrollFrame
+-- Простой тоггл
+local function createToggle(name, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 52)
+    frame.BackgroundColor3 = Color3.fromRGB(35, 35, 48)
+    frame.BorderSizePixel = 0
+    frame.Parent = contentFrame
 
-    local tc = Instance.new("UICorner")
-    tc.CornerRadius = UDim.new(0, 24)
-    tc.Parent = toggleFrame
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 18)
+    c.Parent = frame
 
     local label = Instance.new("TextLabel")
-    label.Text = text
-    label.Position = UDim2.new(0, 30, 0.5, -18)
-    label.Size = UDim2.new(0.6, 0, 0, 36)
+    label.Text = name
+    label.Position = UDim2.new(0, 20, 0.5, -13)
+    label.Size = UDim2.new(0.65, 0, 0, 26)
     label.BackgroundTransparency = 1
     label.TextColor3 = Color3.new(1,1,1)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.TextScaled = true
     label.Font = Enum.Font.GothamSemibold
-    label.Parent = toggleFrame
+    label.Parent = frame
 
-    local switch = Instance.new("Frame")
-    switch.Size = UDim2.new(0, 64, 0, 38)
-    switch.Position = UDim2.new(1, -88, 0.5, -19)
-    switch.BackgroundColor3 = default and Color3.fromRGB(0, 230, 150) or Color3.fromRGB(72, 72, 82)
-    switch.Parent = toggleFrame
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Size = UDim2.new(0, 110, 0, 36)
+    toggleBtn.Position = UDim2.new(1, -125, 0.5, -18)
+    toggleBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
+    toggleBtn.Text = "ВЫКЛ"
+    toggleBtn.TextColor3 = Color3.new(1,1,1)
+    toggleBtn.TextScaled = true
+    toggleBtn.Font = Enum.Font.GothamBold
+    toggleBtn.Parent = frame
 
-    local sc = Instance.new("UICorner")
-    sc.CornerRadius = UDim.new(1, 0)
-    sc.Parent = switch
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 12)
+    btnCorner.Parent = toggleBtn
 
-    local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 32, 0, 32)
-    knob.Position = default and UDim2.new(1, -36, 0.5, -16) or UDim2.new(0, 4, 0.5, -16)
-    knob.BackgroundColor3 = Color3.new(1,1,1)
-    knob.Parent = switch
-
-    local kc = Instance.new("UICorner")
-    kc.CornerRadius = UDim.new(1, 0)
-    kc.Parent = knob
-
-    local isOn = default
-    switch.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            isOn = not isOn
-            callback(isOn)
-
-            TweenService:Create(switch, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
-                BackgroundColor3 = isOn and Color3.fromRGB(0,230,150) or Color3.fromRGB(72,72,82)
-            }):Play()
-
-            TweenService:Create(knob, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
-                Position = isOn and UDim2.new(1,-36,0.5,-16) or UDim2.new(0,4,0.5,-16)
-            }):Play()
-        end
+    local enabled = false
+    toggleBtn.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        callback(enabled)
+        toggleBtn.BackgroundColor3 = enabled and Color3.fromRGB(0, 200, 120) or Color3.fromRGB(70, 70, 80)
+        toggleBtn.Text = enabled and "ВКЛ" or "ВЫКЛ"
     end)
 end
 
--- Добавляем все функции (теперь они видны сразу)
-createToggle("Невидимость", false, function(v) states.invisible = v end)
-createToggle("Полёт (Fly)", false, function(v) states.fly = v end)
-createToggle("Noclip (сквозь стены)", false, function(v) states.noclip = v end)
-createToggle("Бесконечный прыжок", false, function(v) states.infiniteJump = v end)
-createToggle("Режим Бога (бессмертие)", true, function(v) states.godMode = v end)
-createToggle("Safe Speed (CFrame)", true, function(v) states.safeSpeed = v end)
+-- Добавляем функции (все выключены)
+createToggle("Невидимость", function(v) states.invisible = v end)
+createToggle("Полёт (Fly)", function(v) states.fly = v end)
+createToggle("Noclip (сквозь стены)", function(v) states.noclip = v end)
+createToggle("Бесконечный прыжок", function(v) states.infiniteJump = v end)
+createToggle("Режим Бога", function(v) states.godMode = v end)
+createToggle("Safe Speed (CFrame)", function(v) states.safeSpeed = v end)
 
--- Поля для скорости и прыжка
-local function createValueField(title, default, callback)
+-- Поля скорости и прыжка
+local function createValue(title, default, callback)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, -12, 0, 92)
-    frame.BackgroundColor3 = Color3.fromRGB(34, 34, 46)
-    frame.Parent = scrollFrame
+    frame.Size = UDim2.new(1, 0, 0, 55)
+    frame.BackgroundColor3 = Color3.fromRGB(35, 35, 48)
+    frame.Parent = contentFrame
 
     local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, 24)
+    c.CornerRadius = UDim.new(0, 18)
     c.Parent = frame
 
     local lbl = Instance.new("TextLabel")
     lbl.Text = title
-    lbl.Position = UDim2.new(0, 28, 0, 14)
-    lbl.Size = UDim2.new(0.65, 0, 0, 32)
+    lbl.Position = UDim2.new(0, 20, 0.5, -13)
+    lbl.Size = UDim2.new(0.55, 0, 0, 26)
     lbl.BackgroundTransparency = 1
     lbl.TextColor3 = Color3.new(1,1,1)
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.TextScaled = true
     lbl.Font = Enum.Font.GothamSemibold
     lbl.Parent = frame
 
     local box = Instance.new("TextBox")
     box.Text = tostring(default)
-    box.Position = UDim2.new(0.65, 0, 0.5, -22)
-    box.Size = UDim2.new(0.3, 0, 0, 46)
-    box.BackgroundColor3 = Color3.fromRGB(24, 24, 34)
-    box.TextColor3 = Color3.fromRGB(0, 245, 255)
+    box.Position = UDim2.new(0.62, 0, 0.5, -18)
+    box.Size = UDim2.new(0.33, 0, 0, 38)
+    box.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    box.TextColor3 = Color3.fromRGB(0, 240, 255)
     box.TextScaled = true
     box.Font = Enum.Font.GothamBold
     box.Parent = frame
 
     local bc = Instance.new("UICorner")
-    bc.CornerRadius = UDim.new(0, 16)
+    bc.CornerRadius = UDim.new(0, 12)
     bc.Parent = box
 
     box.FocusLost:Connect(function()
@@ -229,10 +203,10 @@ local function createValueField(title, default, callback)
     end)
 end
 
-createValueField("Скорость бега", speedValue, function(v) speedValue = v end)
-createValueField("Сила прыжка", jumpPowerValue, function(v) jumpPowerValue = v end)
+createValue("Скорость бега", speedValue, function(v) speedValue = v end)
+createValue("Сила прыжка", jumpPowerValue, function(v) jumpPowerValue = v end)
 
--- ==================== ЛОГИКА ЧИТОВ ====================
+-- ==================== ЛОГИКА ====================
 UserInputService.JumpRequest:Connect(function()
     if states.infiniteJump and humanoid then
         humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
@@ -252,7 +226,6 @@ RunService.Heartbeat:Connect(function(dt)
     humanoid.WalkSpeed = speedValue
     humanoid.JumpPower = jumpPowerValue
 
-    -- Невидимость
     if states.invisible then
         for _, obj in ipairs(character:GetDescendants()) do
             if obj:IsA("BasePart") and obj.Name ~= "HumanoidRootPart" then obj.Transparency = 1
@@ -265,7 +238,6 @@ RunService.Heartbeat:Connect(function(dt)
         end
     end
 
-    -- Fly
     if states.fly then
         if not flyVel then
             flyVel = Instance.new("BodyVelocity")
@@ -287,26 +259,17 @@ RunService.Heartbeat:Connect(function(dt)
     end
 
     if states.noclip then
-        for _, part in ipairs(character:GetDescendants()) do
-            if part:IsA("BasePart") then part.CanCollide = false end
+        for _, p in ipairs(character:GetDescendants()) do
+            if p:IsA("BasePart") then p.CanCollide = false end
         end
     end
 
     if states.safeSpeed and humanoid.MoveDirection.Magnitude > 0 then
-        rootPart.CFrame += humanoid.MoveDirection * speedValue * dt * 3.8
+        rootPart.CFrame += humanoid.MoveDirection * speedValue * dt * 3.7
     end
 end)
 
--- Управление меню
-local isMinimized = false
-minBtn.MouseButton1Click:Connect(function()
-    isMinimized = not isMinimized
-    local targetSize = isMinimized and UDim2.new(0,410,0,72) or UDim2.new(0,410,0,720)
-    TweenService:Create(mainFrame, TweenInfo.new(0.45, Enum.EasingStyle.Quint), {Size = targetSize}):Play()
-    scrollFrame.Visible = not isMinimized
-    minBtn.Text = isMinimized and "+" or "–"
-end)
-
+-- Управление
 closeBtn.MouseButton1Click:Connect(function()
     screenGui.Enabled = false
 end)
@@ -318,9 +281,9 @@ UserInputService.InputBegan:Connect(function(input)
 end)
 
 StarterGui:SetCore("SendNotification", {
-    Title = "MALOT v5.3 PERFECT",
-    Text = "Теперь функции видны сразу! Меню двигается легко. RightShift — открыть.",
+    Title = "MALOT v5.4 COMPACT",
+    Text = "Меню исправлено! Всё видно, тогглы работают, ничего не включается само. RightShift — открыть.",
     Duration = 8
 })
 
-print("[MALOT] v5.3 PERFECT ЗАГРУЖЕН — всё должно быть идеально!")
+print("[MALOT] v5.4 COMPACT ЗАГРУЖЕН — теперь всё должно быть идеально!")
