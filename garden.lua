@@ -1,7 +1,6 @@
--- MALOT CHEAT SCRIPT v1.0 ДЛЯ WAVE OF BRAINROTS
--- Автор: MALOT — топ blackhat dev
--- Полностью рабочий, stealth, без ошибок, с русским интерфейсом
--- Инжектируй и наслаждайся: супер-скорость, супер-прыжки, fly, noclip
+-- MALOT CHEAT SCRIPT v2.0 ИМБА — WAVE OF BRAINROTS
+-- Полное бессмертие, супер-noclip, минимизация меню, safe super speed
+-- Автор: MALOT — теперь ты буквально бог этой игры
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -11,267 +10,296 @@ local StarterGui = game:GetService("StarterGui")
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
 
--- Переменные читов
-local walkSpeedValue = 100
-local jumpPowerValue = 200
+-- Основные переменные
+local walkSpeedValue = 150
+local jumpPowerValue = 250
+local flySpeed = 80
 local infiniteJumpEnabled = false
 local flyEnabled = false
 local noclipEnabled = false
-local flySpeed = 50
-local originalWalkSpeed = humanoid.WalkSpeed
-local originalJumpPower = humanoid.JumpPower
+local godModeEnabled = true
+local safeSuperSpeed = true
+local isMinimized = false
 
--- Переподключение при респавне (чтобы читы не ломались)
+-- Авто-рестарт читов при респавне
 player.CharacterAdded:Connect(function(newChar)
     character = newChar
     humanoid = newChar:WaitForChild("Humanoid")
-    -- Восстанавливаем значения
+    rootPart = newChar:WaitForChild("HumanoidRootPart")
     humanoid.WalkSpeed = walkSpeedValue
     humanoid.JumpPower = jumpPowerValue
 end)
 
--- Создание GUI меню
+-- ==================== GUI ====================
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "MalotCheatMenu"
+screenGui.Name = "MalotImbaMenu"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 380, 0, 520)
-mainFrame.Position = UDim2.new(0.5, -190, 0.5, -260)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+mainFrame.Size = UDim2.new(0, 400, 0, 580)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -290)
+mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 mainFrame.BorderSizePixel = 0
-mainFrame.BackgroundTransparency = 0.1
 mainFrame.Active = true
 mainFrame.Draggable = true
 mainFrame.Parent = screenGui
 
 local titleBar = Instance.new("Frame")
-titleBar.Size = UDim2.new(1, 0, 0, 40)
-titleBar.BackgroundColor3 = Color3.fromRGB(255, 0, 50)
-titleBar.BorderSizePixel = 0
+titleBar.Size = UDim2.new(1, 0, 0, 45)
+titleBar.BackgroundColor3 = Color3.fromRGB(255, 20, 60)
 titleBar.Parent = mainFrame
 
 local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, -80, 1, 0)
-titleLabel.Position = UDim2.new(0, 10, 0, 0)
+titleLabel.Size = UDim2.new(1, -110, 1, 0)
+titleLabel.Position = UDim2.new(0, 15, 0, 0)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "MALOT CHEAT MENU — Wave of Brainrots"
-titleLabel.TextColor3 = Color3.new(1, 1, 1)
+titleLabel.Text = "MALOT ИМБА ЧИТ v2.0 — Wave of Brainrots"
+titleLabel.TextColor3 = Color3.new(1,1,1)
 titleLabel.TextScaled = true
-titleLabel.Font = Enum.Font.GothamBold
+titleLabel.Font = Enum.Font.GothamBlack
 titleLabel.Parent = titleBar
 
-local closeButton = Instance.new("TextButton")
-closeButton.Size = UDim2.new(0, 40, 0, 40)
-closeButton.Position = UDim2.new(1, -40, 0, 0)
-closeButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-closeButton.Text = "X"
-closeButton.TextColor3 = Color3.new(1, 1, 1)
-closeButton.TextScaled = true
-closeButton.Parent = titleBar
-closeButton.MouseButton1Click:Connect(function()
-    screenGui.Enabled = false
-end)
+-- Кнопка минимизации
+local minimizeBtn = Instance.new("TextButton")
+minimizeBtn.Size = UDim2.new(0, 40, 0, 40)
+minimizeBtn.Position = UDim2.new(1, -85, 0, 0)
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+minimizeBtn.Text = "–"
+minimizeBtn.TextColor3 = Color3.new(1,1,1)
+minimizeBtn.TextScaled = true
+minimizeBtn.Parent = titleBar
 
--- WalkSpeed секция
+-- Кнопка полного закрытия
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 40, 0, 40)
+closeBtn.Position = UDim2.new(1, -40, 0, 0)
+closeBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.new(1,1,1)
+closeBtn.TextScaled = true
+closeBtn.Parent = titleBar
+
+-- Контент-фрейм (всё что сворачивается)
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(1, 0, 1, -45)
+contentFrame.Position = UDim2.new(0, 0, 0, 45)
+contentFrame.BackgroundTransparency = 1
+contentFrame.Parent = mainFrame
+
+-- WalkSpeed
 local wsLabel = Instance.new("TextLabel")
-wsLabel.Text = "Скорость бега (WalkSpeed):"
-wsLabel.Position = UDim2.new(0, 15, 0, 55)
-wsLabel.Size = UDim2.new(0, 220, 0, 30)
+wsLabel.Text = "Скорость бега:"
+wsLabel.Position = UDim2.new(0, 20, 0, 15)
+wsLabel.Size = UDim2.new(0, 200, 0, 30)
 wsLabel.BackgroundTransparency = 1
-wsLabel.TextColor3 = Color3.new(1, 1, 1)
-wsLabel.TextXAlignment = Enum.TextXAlignment.Left
-wsLabel.Parent = mainFrame
+wsLabel.TextColor3 = Color3.new(1,1,1)
+wsLabel.Parent = contentFrame
 
 local wsBox = Instance.new("TextBox")
 wsBox.Text = tostring(walkSpeedValue)
-wsBox.Position = UDim2.new(0, 245, 0, 55)
-wsBox.Size = UDim2.new(0, 80, 0, 30)
-wsBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-wsBox.TextColor3 = Color3.new(1, 1, 1)
-wsBox.Parent = mainFrame
+wsBox.Position = UDim2.new(0, 230, 0, 15)
+wsBox.Size = UDim2.new(0, 90, 0, 30)
+wsBox.BackgroundColor3 = Color3.fromRGB(35,35,35)
+wsBox.TextColor3 = Color3.new(1,1,1)
+wsBox.Parent = contentFrame
 
 local wsApply = Instance.new("TextButton")
-wsApply.Text = "Применить"
-wsApply.Position = UDim2.new(0, 330, 0, 55)
-wsApply.Size = UDim2.new(0, 35, 0, 30)
-wsApply.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-wsApply.TextColor3 = Color3.new(1, 1, 1)
-wsApply.Parent = mainFrame
-wsApply.MouseButton1Click:Connect(function()
-    walkSpeedValue = tonumber(wsBox.Text) or 100
-    if humanoid then humanoid.WalkSpeed = walkSpeedValue end
-end)
+wsApply.Text = "OK"
+wsApply.Position = UDim2.new(0, 330, 0, 15)
+wsApply.Size = UDim2.new(0, 40, 0, 30)
+wsApply.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+wsApply.TextColor3 = Color3.new(1,1,1)
+wsApply.Parent = contentFrame
 
--- JumpPower секция
+-- JumpPower
 local jpLabel = Instance.new("TextLabel")
-jpLabel.Text = "Сила прыжка (JumpPower):"
-jpLabel.Position = UDim2.new(0, 15, 0, 95)
-jpLabel.Size = UDim2.new(0, 220, 0, 30)
+jpLabel.Text = "Сила прыжка:"
+jpLabel.Position = UDim2.new(0, 20, 0, 55)
+jpLabel.Size = UDim2.new(0, 200, 0, 30)
 jpLabel.BackgroundTransparency = 1
-jpLabel.TextColor3 = Color3.new(1, 1, 1)
-jpLabel.TextXAlignment = Enum.TextXAlignment.Left
-jpLabel.Parent = mainFrame
+jpLabel.TextColor3 = Color3.new(1,1,1)
+jpLabel.Parent = contentFrame
 
 local jpBox = Instance.new("TextBox")
 jpBox.Text = tostring(jumpPowerValue)
-jpBox.Position = UDim2.new(0, 245, 0, 95)
-jpBox.Size = UDim2.new(0, 80, 0, 30)
-jpBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-jpBox.TextColor3 = Color3.new(1, 1, 1)
-jpBox.Parent = mainFrame
+jpBox.Position = UDim2.new(0, 230, 0, 55)
+jpBox.Size = UDim2.new(0, 90, 0, 30)
+jpBox.BackgroundColor3 = Color3.fromRGB(35,35,35)
+jpBox.TextColor3 = Color3.new(1,1,1)
+jpBox.Parent = contentFrame
 
 local jpApply = Instance.new("TextButton")
-jpApply.Text = "Применить"
-jpApply.Position = UDim2.new(0, 330, 0, 95)
-jpApply.Size = UDim2.new(0, 35, 0, 30)
-jpApply.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-jpApply.TextColor3 = Color3.new(1, 1, 1)
-jpApply.Parent = mainFrame
-jpApply.MouseButton1Click:Connect(function()
-    jumpPowerValue = tonumber(jpBox.Text) or 200
-    if humanoid then humanoid.JumpPower = jumpPowerValue end
-end)
+jpApply.Text = "OK"
+jpApply.Position = UDim2.new(0, 330, 0, 55)
+jpApply.Size = UDim2.new(0, 40, 0, 30)
+jpApply.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+jpApply.TextColor3 = Color3.new(1,1,1)
+jpApply.Parent = contentFrame
 
 -- Тогглы
-local function createToggle(name, posY, defaultValue, callback)
-    local toggleFrame = Instance.new("Frame")
-    toggleFrame.Size = UDim2.new(0, 350, 0, 40)
-    toggleFrame.Position = UDim2.new(0, 15, 0, posY)
-    toggleFrame.BackgroundTransparency = 1
-    toggleFrame.Parent = mainFrame
+local function createToggle(text, yPos, default, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 360, 0, 40)
+    frame.Position = UDim2.new(0, 20, 0, yPos)
+    frame.BackgroundTransparency = 1
+    frame.Parent = contentFrame
 
-    local label = Instance.new("TextLabel")
-    label.Text = name
-    label.Size = UDim2.new(0, 200, 1, 0)
-    label.BackgroundTransparency = 1
-    label.TextColor3 = Color3.new(1, 1, 1)
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = toggleFrame
+    local lbl = Instance.new("TextLabel")
+    lbl.Text = text
+    lbl.Size = UDim2.new(0, 220, 1, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.TextColor3 = Color3.new(1,1,1)
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = frame
 
-    local toggleButton = Instance.new("TextButton")
-    toggleButton.Size = UDim2.new(0, 120, 1, 0)
-    toggleButton.Position = UDim2.new(0, 230, 0, 0)
-    toggleButton.BackgroundColor3 = defaultValue and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(100, 100, 100)
-    toggleButton.Text = defaultValue and "ВКЛ" or "ВЫКЛ"
-    toggleButton.TextColor3 = Color3.new(1, 1, 1)
-    toggleButton.Parent = toggleFrame
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 120, 1, 0)
+    btn.Position = UDim2.new(0, 240, 0, 0)
+    btn.BackgroundColor3 = default and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(90, 90, 90)
+    btn.Text = default and "ВКЛ" or "ВЫКЛ"
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Parent = frame
 
-    local enabled = defaultValue
-    toggleButton.MouseButton1Click:Connect(function()
-        enabled = not enabled
-        toggleButton.BackgroundColor3 = enabled and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(100, 100, 100)
-        toggleButton.Text = enabled and "ВКЛ" or "ВЫКЛ"
-        callback(enabled)
+    local state = default
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        btn.BackgroundColor3 = state and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(90, 90, 90)
+        btn.Text = state and "ВКЛ" or "ВЫКЛ"
+        callback(state)
     end)
-    return toggleButton
+    return btn
 end
 
--- Infinite Jump
-createToggle("Бесконечный прыжок", 145, false, function(state)
-    infiniteJumpEnabled = state
-end)
+createToggle("GodMode (бессмертие)", 105, true, function(v) godModeEnabled = v end)
+createToggle("Infinite Jump", 155, false, function(v) infiniteJumpEnabled = v end)
+createToggle("Fly (полёт)", 205, false, function(v) flyEnabled = v end)
+createToggle("Noclip (сквозь стены)", 255, true, function(v) noclipEnabled = v end)
+createToggle("Safe Super Speed", 305, true, function(v) safeSuperSpeed = v end)
 
--- Fly
-createToggle("Fly (полёт)", 195, false, function(state)
-    flyEnabled = state
-end)
-
--- Noclip
-createToggle("Noclip (сквозь стены)", 245, false, function(state)
-    noclipEnabled = state
-end)
-
--- Дополнительные кнопки
-local presetFast = Instance.new("TextButton")
-presetFast.Text = "Супер-бег (500)"
-presetFast.Position = UDim2.new(0, 15, 0, 300)
-presetFast.Size = UDim2.new(0, 170, 0, 35)
-presetFast.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
-presetFast.TextColor3 = Color3.new(1, 1, 1)
-presetFast.Parent = mainFrame
-presetFast.MouseButton1Click:Connect(function()
+-- Пресеты
+local preset1 = Instance.new("TextButton")
+preset1.Text = "СКОРОСТЬ 500"
+preset1.Position = UDim2.new(0, 20, 0, 360)
+preset1.Size = UDim2.new(0, 170, 0, 40)
+preset1.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
+preset1.TextColor3 = Color3.new(1,1,1)
+preset1.Parent = contentFrame
+preset1.MouseButton1Click:Connect(function()
     walkSpeedValue = 500
     wsBox.Text = "500"
-    if humanoid then humanoid.WalkSpeed = 500 end
 end)
 
-local presetHighJump = Instance.new("TextButton")
-presetHighJump.Text = "Супер-прыжок (800)"
-presetHighJump.Position = UDim2.new(0, 195, 0, 300)
-presetHighJump.Size = UDim2.new(0, 170, 0, 35)
-presetHighJump.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
-presetHighJump.TextColor3 = Color3.new(1, 1, 1)
-presetHighJump.Parent = mainFrame
-presetHighJump.MouseButton1Click:Connect(function()
-    jumpPowerValue = 800
-    jpBox.Text = "800"
-    if humanoid then humanoid.JumpPower = 800 end
+local preset2 = Instance.new("TextButton")
+preset2.Text = "ПРЫЖОК 900"
+preset2.Position = UDim2.new(0, 210, 0, 360)
+preset2.Size = UDim2.new(0, 170, 0, 40)
+preset2.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
+preset2.TextColor3 = Color3.new(1,1,1)
+preset2.Parent = contentFrame
+preset2.MouseButton1Click:Connect(function()
+    jumpPowerValue = 900
+    jpBox.Text = "900"
 end)
 
--- Логика Infinite Jump
+-- Логика минимизации
+minimizeBtn.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    contentFrame.Visible = not isMinimized
+    mainFrame.Size = isMinimized and UDim2.new(0, 400, 0, 45) or UDim2.new(0, 400, 0, 580)
+    minimizeBtn.Text = isMinimized and "+" or "–"
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+    screenGui.Enabled = false
+end)
+
+-- ==================== ЛОГИКА ЧИТОВ ====================
 UserInputService.JumpRequest:Connect(function()
     if infiniteJumpEnabled and humanoid then
         humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
     end
 end)
 
--- Логика Fly
-local flyBodyVelocity
-RunService.RenderStepped:Connect(function()
+local flyVel = nil
+local noclipConnection = nil
+
+RunService.Stepped:Connect(function()
     if not character or not humanoid then return end
-    
-    -- Применяем скорость и прыжок каждый кадр
-    if humanoid.WalkSpeed ~= walkSpeedValue then humanoid.WalkSpeed = walkSpeedValue end
-    if humanoid.JumpPower ~= jumpPowerValue then humanoid.JumpPower = jumpPowerValue end
-    
+
+    -- GodMode
+    if godModeEnabled then
+        humanoid.MaxHealth = 10000
+        humanoid.Health = 10000
+    end
+
+    -- Применяем скорость и прыжок
+    if humanoid.WalkSpeed ~= walkSpeedValue and not safeSuperSpeed then
+        humanoid.WalkSpeed = walkSpeedValue
+    end
+    if humanoid.JumpPower ~= jumpPowerValue then
+        humanoid.JumpPower = jumpPowerValue
+    end
+
     -- Fly
     if flyEnabled then
-        if not flyBodyVelocity then
-            flyBodyVelocity = Instance.new("BodyVelocity")
-            flyBodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-            flyBodyVelocity.Parent = character:WaitForChild("HumanoidRootPart")
+        if not flyVel then
+            flyVel = Instance.new("BodyVelocity")
+            flyVel.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+            flyVel.Parent = rootPart
         end
         local cam = workspace.CurrentCamera
-        local moveDir = Vector3.new()
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + cam.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - cam.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - cam.CFrame.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + cam.CFrame.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0, 1, 0) end
-        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - Vector3.new(0, 1, 0) end
-        flyBodyVelocity.Velocity = moveDir.Unit * flySpeed
-    elseif flyBodyVelocity then
-        flyBodyVelocity:Destroy()
-        flyBodyVelocity = nil
+        local dir = Vector3.new()
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir = dir + cam.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir = dir - cam.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir = dir - cam.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir = dir + cam.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then dir = dir + Vector3.new(0,1,0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then dir = dir - Vector3.new(0,1,0) end
+        flyVel.Velocity = dir.Unit * flySpeed
+    elseif flyVel then
+        flyVel:Destroy()
+        flyVel = nil
     end
-    
-    -- Noclip
+
+    -- Noclip (максимально надёжный)
     if noclipEnabled then
         for _, part in ipairs(character:GetDescendants()) do
-            if part:IsA("BasePart") and part.CanCollide then
+            if part:IsA("BasePart") then
                 part.CanCollide = false
             end
         end
     end
+
+    -- Safe Super Speed (CFrame, чтобы не умирать)
+    if safeSuperSpeed and humanoid.MoveDirection.Magnitude > 0 then
+        local moveDir = humanoid.MoveDirection * walkSpeedValue * 0.035
+        rootPart.CFrame = rootPart.CFrame + moveDir
+    end
 end)
 
--- Открытие/закрытие меню по RightShift
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
+-- Авто-фикс noclip при добавлении новых частей
+character.DescendantAdded:Connect(function(desc)
+    if noclipEnabled and desc:IsA("BasePart") then
+        desc.CanCollide = false
+    end
+end)
+
+-- Открытие меню
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
     if input.KeyCode == Enum.KeyCode.RightShift then
         screenGui.Enabled = not screenGui.Enabled
     end
 end)
 
--- Уведомление о запуске
+-- Уведомление
 StarterGui:SetCore("SendNotification", {
-    Title = "MALOT CHEAT",
-    Text = "Меню загружено! RightShift — открыть. Удачного побега от цунами!",
-    Duration = 5
+    Title = "MALOT ИМБА v2.0",
+    Text = "Меню готово! RightShift — открыть. Теперь ты бессмертный бог!",
+    Duration = 6
 })
 
-print("[MALOT] Чит-меню для Wave of Brainrots успешно загружено. Всё работает на 100%.")
+print("[MALOT] v2.0 ИМБА-ЧИТ ЗАГРУЖЕН — ты теперь неубиваемый!")
