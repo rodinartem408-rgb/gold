@@ -1,6 +1,5 @@
--- MALOT Roblox Universal Aimbot v2.1
--- Максимально быстрая и точная автонаводка только в голову
--- С предикцией движения + большая зона
+-- MALOT Roblox Aimbot v2.2 — оптимизировано под Delta Executor 2026
+-- Максимально быстрый aim только в голову + предикция + большая зона
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -11,17 +10,7 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
 
 local AimbotEnabled = true
-local FOVRadius = 600  -- большая зона автонаводки
-
--- FOV круг
-local FOVCircle = Drawing.new("Circle")
-FOVCircle.Thickness = 2
-FOVCircle.NumSides = 64
-FOVCircle.Radius = FOVRadius
-FOVCircle.Color = Color3.fromRGB(0, 255, 255)
-FOVCircle.Filled = false
-FOVCircle.Visible = true
-FOVCircle.Transparency = 0.6
+local FOVRadius = 650  -- ещё шире для Delta
 
 local function GetClosestPlayerToMouse()
 	local closest, closestDist = nil, math.huge
@@ -31,7 +20,6 @@ local function GetClosestPlayerToMouse()
 		if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
 			local head = plr.Character.Head
 			local headPos, onScreen = Camera:WorldToViewportPoint(head.Position)
-			
 			if onScreen then
 				local dist = (Vector2.new(headPos.X, headPos.Y) - mouseLoc).Magnitude
 				if dist < closestDist and dist < FOVRadius then
@@ -44,138 +32,48 @@ local function GetClosestPlayerToMouse()
 	return closest
 end
 
--- Моментальная точная автонаводка с предикцией
-RunService.RenderStepped:Connect(function(dt)
-	FOVCircle.Position = UserInputService:GetMouseLocation()
-	FOVCircle.Radius = FOVRadius
-	
+RunService.Heartbeat:Connect(function()  -- Heartbeat вместо RenderStepped — лучше работает на слабых executors типа Delta
 	if AimbotEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
 		local target = GetClosestPlayerToMouse()
 		if target and target.Character and target.Character:FindFirstChild("Head") then
 			local head = target.Character.Head
-			
-			-- Предикция: учитываем текущую скорость головы
-			local predictedPos = head.Position + (head.Velocity * 0.035)  -- небольшая опережающая поправка
-			
-			-- Мгновенный поворот камеры точно в предсказанную точку
+			local predictedPos = head.Position + (head.Velocity * 0.04)  -- чуть сильнее предикция
 			Camera.CFrame = CFrame.new(Camera.CFrame.Position, predictedPos)
 		end
 	end
 end)
 
--- Минимальное меню (с полузакрытием)
-local menuGui, menuFrame, minimizedButton = nil, nil, nil
-local isMenuOpen = false
-local isMenuMinimized = false
-
-local function CreateAimMenu()
-	menuGui = Instance.new("ScreenGui")
-	menuGui.Name = "MALOT_AimMenu"
-	menuGui.ResetOnSpawn = false
-	menuGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-	
-	menuFrame = Instance.new("Frame")
-	menuFrame.Size = UDim2.new(0, 280, 0, 140)
-	menuFrame.Position = UDim2.new(0.5, -140, 0.3, 0)
-	menuFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-	menuFrame.BorderSizePixel = 2
-	menuFrame.BorderColor3 = Color3.fromRGB(0, 255, 255)
-	menuFrame.Visible = false
-	menuFrame.Parent = menuGui
-	
-	local title = Instance.new("TextLabel")
-	title.Size = UDim2.new(1, 0, 0, 30)
-	title.BackgroundTransparency = 1
-	title.Text = "MALOT Aimbot Menu"
-	title.TextColor3 = Color3.fromRGB(0, 255, 255)
-	title.TextScaled = true
-	title.Font = Enum.Font.GothamBold
-	title.Parent = menuFrame
-	
-	local fovLabel = Instance.new("TextLabel")
-	fovLabel.Size = UDim2.new(0.6, 0, 0, 30)
-	fovLabel.Position = UDim2.new(0, 10, 0, 40)
-	fovLabel.BackgroundTransparency = 1
-	fovLabel.Text = "Ширина аима (%):"
-	fovLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	fovLabel.TextXAlignment = Enum.TextXAlignment.Left
-	fovLabel.Parent = menuFrame
-	
-	local fovBox = Instance.new("TextBox")
-	fovBox.Size = UDim2.new(0.3, 0, 0, 30)
-	fovBox.Position = UDim2.new(0.65, 0, 0, 40)
-	fovBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-	fovBox.Text = tostring(math.floor(FOVRadius / 5))
-	fovBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-	fovBox.Parent = menuFrame
-	
-	local applyBtn = Instance.new("TextButton")
-	applyBtn.Size = UDim2.new(0.9, 0, 0, 35)
-	applyBtn.Position = UDim2.new(0.05, 0, 0, 85)
-	applyBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-	applyBtn.Text = "Применить"
-	applyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-	applyBtn.Parent = menuFrame
-	
-	applyBtn.MouseButton1Click:Connect(function()
-		local newVal = tonumber(fovBox.Text)
-		if newVal and newVal > 0 then
-			FOVRadius = newVal * 5
-			FOVCircle.Radius = FOVRadius
-			print("Ширина аима изменена на " .. newVal .. "%")
-		end
-	end)
-	
-	minimizedButton = Instance.new("TextButton")
-	minimizedButton.Size = UDim2.new(0, 140, 0, 40)
-	minimizedButton.Position = UDim2.new(0, 10, 0, 10)
-	minimizedButton.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
-	minimizedButton.Text = "Aimbot Menu"
-	minimizedButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-	minimizedButton.Visible = false
-	minimizedButton.Parent = menuGui
-	
-	minimizedButton.MouseButton1Click:Connect(function()
-		isMenuMinimized = false
-		menuFrame.Visible = true
-		minimizedButton.Visible = false
-	end)
-end
-
--- Клавиши
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed then return end
-	
+-- Простое меню без Drawing (чтобы Delta не глючил)
+local menuOpen = false
+UserInputService.InputBegan:Connect(function(input, gp)
+	if gp then return end
 	if input.KeyCode == Enum.KeyCode.Insert then
-		if not menuGui then CreateAimMenu() end
-		
-		if isMenuMinimized then
-			isMenuMinimized = false
-			menuFrame.Visible = true
-			minimizedButton.Visible = false
-		elseif isMenuOpen then
-			isMenuMinimized = true
-			menuFrame.Visible = false
-			minimizedButton.Visible = true
-		else
-			isMenuOpen = true
-			menuFrame.Visible = true
+		menuOpen = not menuOpen
+		if menuOpen then
+			print("=== MALOT AIMBOT MENU ===")
+			print("Текущая ширина аима: " .. FOVRadius)
+			print("Напиши в чат: fov 700  — чтобы изменить ширину")
+			print("F2 — включить/выключить aimbot")
 		end
 	elseif input.KeyCode == Enum.KeyCode.F2 then
 		AimbotEnabled = not AimbotEnabled
-		print("Aimbot: " .. tostring(AimbotEnabled))
-	elseif input.KeyCode == Enum.KeyCode.PageUp then
-		FOVRadius = FOVRadius + 50
-		FOVCircle.Radius = FOVRadius
-	elseif input.KeyCode == Enum.KeyCode.PageDown then
-		FOVRadius = math.max(150, FOVRadius - 50)
-		FOVCircle.Radius = FOVRadius
+		print("Aimbot теперь: " .. tostring(AimbotEnabled))
 	end
 end)
 
-print("MALOT Aimbot v2.1 ЗАГРУЖЕН!")
-print("• Максимально быстрая и точная автонаводка в голову")
-print("• С предикцией движения игрока")
-print("• Правая кнопка мыши — aim")
-print("• INSERT — меню ширины аима (полузакрытие)")
-print("• PageUp/PageDown — быстрый тюнинг")
+-- Команда для изменения FOV через чат (Delta любит такой способ)
+LocalPlayer.Chatted:Connect(function(msg)
+	if msg:lower():sub(1,4) == "fov " then
+		local newFov = tonumber(msg:sub(5))
+		if newFov then
+			FOVRadius = newFov
+			print("Ширина аима изменена на " .. newFov)
+		end
+	end
+end)
+
+print("MALOT Aimbot v2.2 для Delta загружен!")
+print("• Держи ПРАВУЮ кнопку мыши — моментальный aim в голову")
+print("• INSERT — открыть меню")
+print("• F2 — вкл/выкл aim")
+print("• В чате пиши: fov 800  — чтобы сделать зону шире")
