@@ -1,5 +1,6 @@
--- MALOT Roblox Universal Aimbot v2.0
--- Моментальный aimbot только в голову + сильно увеличенная зона + без ESP/VH
+-- MALOT Roblox Universal Aimbot v2.1
+-- Максимально быстрая и точная автонаводка только в голову
+-- С предикцией движения + большая зона
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -10,9 +11,9 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
 
 local AimbotEnabled = true
-local FOVRadius = 600  -- сильно увеличенная ширина автонаводки (по умолчанию)
+local FOVRadius = 600  -- большая зона автонаводки
 
--- FOV круг для визуализации зоны аима
+-- FOV круг
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Thickness = 2
 FOVCircle.NumSides = 64
@@ -28,7 +29,9 @@ local function GetClosestPlayerToMouse()
 	
 	for _, plr in ipairs(Players:GetPlayers()) do
 		if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
-			local headPos, onScreen = Camera:WorldToViewportPoint(plr.Character.Head.Position)
+			local head = plr.Character.Head
+			local headPos, onScreen = Camera:WorldToViewportPoint(head.Position)
+			
 			if onScreen then
 				local dist = (Vector2.new(headPos.X, headPos.Y) - mouseLoc).Magnitude
 				if dist < closestDist and dist < FOVRadius then
@@ -41,21 +44,26 @@ local function GetClosestPlayerToMouse()
 	return closest
 end
 
--- Моментальный aimbot (без плавности)
-RunService.RenderStepped:Connect(function()
+-- Моментальная точная автонаводка с предикцией
+RunService.RenderStepped:Connect(function(dt)
 	FOVCircle.Position = UserInputService:GetMouseLocation()
 	FOVCircle.Radius = FOVRadius
 	
 	if AimbotEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
 		local target = GetClosestPlayerToMouse()
 		if target and target.Character and target.Character:FindFirstChild("Head") then
-			local headPos = target.Character.Head.Position
-			Camera.CFrame = CFrame.new(Camera.CFrame.Position, headPos)
+			local head = target.Character.Head
+			
+			-- Предикция: учитываем текущую скорость головы
+			local predictedPos = head.Position + (head.Velocity * 0.035)  -- небольшая опережающая поправка
+			
+			-- Мгновенный поворот камеры точно в предсказанную точку
+			Camera.CFrame = CFrame.new(Camera.CFrame.Position, predictedPos)
 		end
 	end
 end)
 
--- Минимальное меню для изменения размера аима (с полузакрытием)
+-- Минимальное меню (с полузакрытием)
 local menuGui, menuFrame, minimizedButton = nil, nil, nil
 local isMenuOpen = false
 local isMenuMinimized = false
@@ -118,7 +126,6 @@ local function CreateAimMenu()
 		end
 	end)
 	
-	-- Кнопка для полузакрытого состояния
 	minimizedButton = Instance.new("TextButton")
 	minimizedButton.Size = UDim2.new(0, 140, 0, 40)
 	minimizedButton.Position = UDim2.new(0, 10, 0, 10)
@@ -135,7 +142,7 @@ local function CreateAimMenu()
 	end)
 end
 
--- Управление клавишами
+-- Клавиши
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if gameProcessed then return end
 	
@@ -147,7 +154,6 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 			menuFrame.Visible = true
 			minimizedButton.Visible = false
 		elseif isMenuOpen then
-			-- полузакрытие меню
 			isMenuMinimized = true
 			menuFrame.Visible = false
 			minimizedButton.Visible = true
@@ -167,9 +173,9 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	end
 end)
 
-print("MALOT Aimbot v2.0 ЗАГРУЖЕН!")
-print("• Моментальная автонаводка только в голову")
-print("• Ширина зоны сильно увеличена (FOV 600 по умолчанию)")
+print("MALOT Aimbot v2.1 ЗАГРУЖЕН!")
+print("• Максимально быстрая и точная автонаводка в голову")
+print("• С предикцией движения игрока")
 print("• Правая кнопка мыши — aim")
-print("• INSERT — меню изменения ширины аима (с полузакрытием)")
-print("• PageUp/PageDown — быстрый тюнинг FOV")
+print("• INSERT — меню ширины аима (полузакрытие)")
+print("• PageUp/PageDown — быстрый тюнинг")
