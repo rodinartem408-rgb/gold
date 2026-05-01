@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Telegram Broadcast</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #f0f4ff; min-height: 100vh; }
+    .glass {
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .gradient-bg {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .gradient-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      transition: all 0.3s ease;
+    }
+    .gradient-btn:hover:not(:disabled) {
+      background: linear-gradient(135deg, #5a6fd6 0%, #6a4290 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(102,126,234,0.4);
+    }
+    .gradient-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .nav-item {
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-radius: 12px;
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 500;
+      color: #64748b;
+    }
+    .nav-item:hover {
+      background: rgba(102,126,234,0.08);
+      color: #667eea;
+    }
+    .nav-item.active {
+      background: linear-gradient(135deg, #667eea15, #764ba215);
+      color: #667eea;
+      border-left: 3px solid #667eea;
+    }
+    .tag {
+      background: linear-gradient(135deg, #667eea20, #764ba220);
+      color: #667eea;
+      border: 1px solid #667eea40;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tag .remove {
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+      font-size: 15px;
+      line-height: 1;
+    }
+    .tag .remove:hover { opacity: 1; }
+    .input-field {
+      width: 100%;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.2s;
+      background: #fff;
+      color: #1e293b;
+    }
+    .input-field:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 4px rgba(102,126,234,0.12);
+    }
+    textarea.input-field { resize: vertical; min-height: 120px; }
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 4px 24px rgba(102,126,234,0.10);
+      overflow: hidden;
+    }
+    .section { display: none; }
+    .section.active { display: block; }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+    .connected { background: #d1fae5; color: #065f46; }
+    .connected .status-dot { background: #10b981; }
+    .disconnected { background: #fee2e2; color: #991b1b; }
+    .disconnected .status-dot { background: #ef4444; }
+    .progress-bar-wrap {
+      width: 100%; background: #e2e8f0; border-radius: 10px; height: 8px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%; border-radius: 10px;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      transition: width 0.4s ease;
+    }
+    .log-entry { font-size: 13px; padding: 6px 10px; border-radius: 8px; margin-bottom: 4px; }
+    .log-ok { background: #d1fae5; color: #065f46; }
+    .log-err { background: #fee2e2; color: #991b1b; }
+    .log-info { background: #dbeafe; color: #1e40af; }
+    .sidebar {
+      position: fixed; left: 0; top: 0; bottom: 0; width: 260px;
+      background: #fff;
+      box-shadow: 4px 0 24px rgba(102,126,234,0.10);
+      z-index: 100;
+      display: flex; flex-direction: column;
+      transition: transform 0.3s ease;
+    }
+    .main-content {
+      margin-left: 260px;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 99;
+    }
+    .modal {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200;
+      padding: 16px;
+    }
+    .modal-backdrop {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+    }
+    .modal-box {
+      position: relative;
+      background: #fff;
+      border-radius: 24px;
+      padding: 32px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.2);
+      animation: modalIn 0.3s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.92) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .overlay.show { display: block; }
+      .main-content {
+        margin-left: 0;
+        padding: 16px;
+      }
+    }
+    .hamburger {
+      display: none;
+      position: fixed;
+      top: 16px; left: 16px;
+      z-index: 150;
+      background: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 4px 16px rgba(102,126,234,0.2);
+      cursor: pointer;
+    }
+    @media (max-width: 768px) {
+      .hamburger { display: flex; align-items: center; justify-content: center; }
+    }
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      padding: 14px 20px;
+      border-radius: 14px;
+      color: #fff;
+      font-weight: 600;
+      font-size: 14px;
+      z-index: 300;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+      animation: toastIn 0.3s ease;
+      max-width: 320px;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .toast-success { background: linear-gradient(135deg, #10b981, #059669); }
+    .toast-error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .toast-info { background: linear-gradient(135deg, #667eea, #764ba2); }
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- Hamburger (mobile) -->
+<button class="hamburger" onclick="toggleSidebar()" id="hamburgerBtn">
+  <svg width="22" height="22" fill="none" stroke="#667eea" stroke-width="2.5" stroke-linecap="round">
+    <line x1="3" y1="6" x2="19" y2="6"/>
+    <line x1="3" y1="11" x2="19" y2="11"/>
+    <line x1="3" y1="16" x2="19" y2="16"/>
+  </svg>
+</button>
+
+<!-- Sidebar overlay -->
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <!-- Header -->
+  <div class="gradient-bg p-6">
+    <div class="flex items-center gap-3 mb-3">
+      <div style="background:rgba(255,255,255,0.2);border-radius:12px;padding:10px;">
+        <svg width="22" height="22" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 2L11 13"/>
+          <path d="M22 2L15 22 11 13 2 9l20-7z"/>
+        </svg>
+      </div>
+      <div>
+        <div style="color:white;font-weight:700;font-size:16px;">TG Broadcast</div>
+        <div style="color:rgba(255,255,255,0.7);font-size:12px;">Рассылка сообщений</div>
+      </div>
+    </div>
+    <!-- Status -->
+    <div id="sidebarStatus" class="status-badge disconnected">
+      <div class="status-dot"></div>
+      <span>Не подключено</span>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="flex-1 p-4 flex flex-col gap-1">
+    <div class="nav-item active" onclick="showSection('connect')" id="nav-connect">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Подключение
+    </div>
+    <div class="nav-item" onclick="showSection('broadcast')" id="nav-broadcast">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+      Рассылка
+    </div>
+    <div class="nav-item" onclick="showSection('history')" id="nav-history">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      История
+    </div>
+    <div class="nav-item" onclick="showSection('settings')" id="nav-settings">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg>
+      Настройки
+    </div>
+  </nav>
+
+  <!-- Footer -->
+  <div class="p-4 border-t border-gray-100">
+    <div style="font-size:11px;color:#94a3b8;text-align:center;">
+      Telegram Broadcast Tool v1.0
+    </div>
+  </div>
+</aside>
+
+<!-- Main content -->
+<main class="main-content" id="mainContent">
+  <div style="max-width:720px;margin:0 auto;">
+
+    <!-- SECTION: Connect -->
+    <div class="section active" id="section-connect">
+      <div class="mb-6">
+        <h1 style="font-size:26px;font-weight:800;color:#1e293b;">Подключение аккаунта</h1>
+        <p style="color:#64748b;margin-top:4px;">Войдите в свой Telegram аккаунт через номер телефона</p>
+      </div>
+
+      <!-- API Keys card -->
+      <div class="card p-6 mb-4">
+        <h2 style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:16px;">
+          🔑 API Ключи
+        </h2>
+        <div class="flex flex-col gap-4">
+          <div>
+            <label style="font-size:13px;font-weight:600;color:#64748b;display:block;margin-bottom:6px;">API ID</label>
+            <input type="number" class="input-field" id="apiId" placeholder="Ваш API ID с my.telegram.org" />
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;color:#64748b;display:block;margin-bottom:6px;">API Hash</label>
+            <input type="text" class="input-field" id="apiHash" placeholder="Ваш API Hash с my.telegram.org" />
+          </div>
+          <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px 16px;font-size:13px;color:#92400e;">
+            <strong>📌 Где взять ключи?</strong> Войдите на <a href="https://my.telegram.org" target="_blank" style="color:#667eea;font-weight:600;">my.telegram.org</a> → API development tools → создайте приложение
+          </div>
+        </div>
+      </div>
+
+      <!-- Phone login card -->
+      <div class="card p-6 mb-4" id="phoneCard">
+        <h2 style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:16px;">
+          📱 Авторизация
+        </h2>
+
+        <!-- Step 1: phone -->
+        <div id="step-phone">
+          <div style="margin-bottom:16px;">
+            <label style="font-size:13px;font-weight:600;color:#64748b;display:block;margin-bottom:6px;">Номер телефона</label>
+            <input type="tel" class="input-field" id="phoneInput" placeholder="+79991234567" />
+          </div>
+          <button onclick="sendCode()" class="gradient-btn text-white font-semibold py-3 px-6 rounded-xl w-full" id="sendCodeBtn">
+            Отправить код
+          </button>
+        </div>
+
+        <!-- Step 2: code -->
+        <div id="step-code" style="display:none;">
+          <div style="background:#dbeafe;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:14px;color:#1e40af;">
+            📩 Код отправлен на номер <strong id="phoneDisplay"></strong>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="font-size:13px;font-weight:600;color:#64748b;display:block;margin-bottom:6px;">Код из Telegram</label>
+            <input type="text" class="input-field" id="codeInput" placeholder="12345" maxlength="10" />
+          </div>
+          <div class="flex gap-3">
+            <button onclick="goBackPhone()" style="background:#f1f5f9;color:#64748b;border:none;border-radius:12px;padding:12px 20px;font-weight:600;cursor:pointer;flex:1;">
+              ← Назад
+            </button>
+            <button onclick="verifyCode()" class="gradient-btn text-white font-semibold py-3 px-6 rounded-xl" style="flex:2;" id="verifyBtn">
+              Войти
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: 2FA -->
+        <div id="step-2fa" style="display:none;">
+          <div style="background:#fef3c7;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:14px;color:#92400e;">
+            🔐 Требуется двухфакторная аутентификация
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="font-size:13px;font-weight:600;color:#64748b;display:block;margin-bottom:6px;">Пароль 2FA</label>
+            <input type="password" class="input-field" id="passwordInput" placeholder="Ваш пароль" />
+          </div>
+          <button onclick="verify2FA()" class="gradient-btn text-white font-semibold py-3 px-6 rounded-xl w-full" id="twoFABtn">
+            Подтвердить
+          </button>
+        </div>
+      </div>
+
+      <!-- Connected state -->
+      <div class="card p-6" id="connectedCard" style="display:none;">
+        <div style="text-align:center;padding:20px 0;">
+          <div style="width:72px;height:72px;background:linear-gradient(135deg,#d1fae5,#a7f3d0);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+            <svg width="32" height="32" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h2 style="font-size:20px;font-weight:800;color:#1e293b;margin-bottom:8px;">Подключено!</h2>
+          <p style="color:#64748b;margin-bottom:4px;">Аккаунт: <strong id="connectedUser" style="color:#667eea;"></strong></p>
+          <p style="color:#94a3b8;font-size:13px;" id="connectedPhone"></p>
+          <div class="flex gap-3 mt-6 justify-center flex-wrap">
+            <button onclick="showSection('broadcast')" class="gradient-btn text-white font-semibold py-3 px-6 rounded-xl">
+              🚀 Перейти к рассылке
+            </button>
+            <button onclick="logout()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:12px;padding:12px 24px;font-weight:600;cursor:pointer;">
+              Выйти
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION: Broadcast -->
+    <div class="section" id="section-broadcast">
+      <div class="mb-6">
+        <h1 style="font-size:26px;font-weight:800;color:#1e293b;">Рассылка сообщений</h1>
+        <p style="color:#64748b;margin-top:4px;">Отправьте сообщение нескольким пользователям</p>
+      </div>
+
+      <!-- Not connected warning -->
+      <div id="notConnectedWarn" class="card p-6 mb-4" style="display:none;">
+        <div style="text-align:center;padding:16px 0;">
+          <div style="font-size:40px;margin-bottom:12px;">🔌</div>
+          <h3 style="font-size:17px;font-weight:700;color:#1e293b;margin-bottom:8px;">Нет подключения</h3>
+          <p style="color:#64748b;margin-bottom:16px;">Сначала войдите в аккаунт Telegram</p>
+          <button onclick="showSection('connect')" class="gradient-btn text-white font-semibold py-3 px-6 rounded-xl">
+            Подключить аккаунт
+          </button>
+        </div>
+      </div>
+
+      <div id="broadcastForm">
+        <!-- Recipients card -->
+        <div class="card p-6 mb-4">
+          <h2 style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:4px;">👥 Получатели</h2>
+          <p style="font-size:13px;color:#94a3b8;margin-bottom:16px;">Введите username (без @) и нажмите Enter или кнопку +</p>
+          <div class="flex gap-2 mb-3">
+            <input type="text" class="input-field" id="recipientInput" placeholder="username (без @)" onkeydown="handleRecipientKey(event)" style="flex:1;" />
+            <button onclick="addRecipient()" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:12px;padding:12px 20px;font-weight:700;cursor:pointer;white-space:nowrap;font-size:18px;">
+              +
+            </button>
+          </div>
+          <!-- Tags -->
+          <div id="recipientTags" style="display:flex;flex-wrap:wrap;gap:8px;min-height:36px;">
+            <span style="color:#94a3b8;font-size:13px;align-self:center;" id="noRecipientsText">Нет получателей</span>
+          </div>
+          <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:13px;color:#64748b;" id="recipientCount">0 получателей</span>
+            <button onclick="clearRecipients()" style="background:none;border:none;color:#ef4444;font-size:13px;cursor:pointer;font-weight:600;" id="clearRecipientsBtn">
+              Очистить всё
+            </button>
+          </div>
+        </div>
+
+        <!-- Message card -->
+        <div class="card p-6 mb-4">
+          <h2 style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:4px;">✍️ Сообщение</h2>
+          <p style="font-size:13px;color:#94a3b8;margin-bottom:16px;">Текст который будет отправлен каждому пользователю</p>
+          <textarea class="input-field" id="messageText" placeholder="Введите текст сообщения для рассылки..."></textarea>
+          <div class="flex items-center justify-between mt-3">
+            <span style="font-size:12px;color:#94a3b8;" id="charCount">0 символов</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <label style="font-size:13px;color:#64748b;display:flex;align-items:center;gap:6px;cursor:pointer;">
+                <input type="checkbox" id="delayEnabled" style="accent-color:#667eea;width:16px;height:16px;" />
+                Задержка между отправками
+              </label>
+              <input type="number" id="delayMs" value="1000" min="500" max="10000" step="100" class="input-field" style="width:90px;padding:6px 10px;font-size:13px;" />
+              <span style="font-size:12px;color:#94a3b8;">мс</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Send button -->
+        <div class="card p-6 mb-4">
+          <div class="flex items-center gap-4 flex-wrap">
+            <button onclick="startBroadcast()" class="gradient-btn text-white font-bold py-4 px-8 rounded-xl text-base flex items-center gap-2" id="sendBtn">
+              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+              Запустить рассылку
+            </button>
+            <button onclick="stopBroadcast()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:12px;padding:14px 24px;font-weight:700;cursor:pointer;display:none;" id="stopBtn">
+              ⏹ Остановить
+            </button>
+            <div style="flex:1;min-width:180px;" id="progressWrap" style="display:none;">
+              <div style="font-size:13px;color:#64748b;margin-bottom:6px;" id="progressLabel">Отправка...</div>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+              </div>
+              <div style="font-size:12px;color:#94a3b8;margin-top:4px;" id="progressText"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Log -->
+        <div class="card p-6" id="logCard" style="display:none;">
+          <div class="flex items-center justify-between mb-3">
+            <h2 style="font-size:15px;font-weight:700;color:#1e293b;">📋 Лог отправки</h2>
+            <button onclick="clearLog()" style="background:none;border:none;color:#94a3b8;font-size:12px;cursor:pointer;">Очистить</button>
+          </div>
+          <div id="logContainer" style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION: History -->
+    <div class="section" id="section-history">
+      <div class="mb-6">
+        <h1 style="font-size:26px;font-weight:800;color:#1e293b;">История рассылок</h1>
+        <p style="color:#64748b;margin-top:4px;">Все выполненные рассылки</p>
+      </div>
+      <div class="card p-6" id="historyContainer">
+        <div style="text-align:center;padding:40px 0;color:#94a3b8;">
+          <div style="font-size:48px;margin-bottom:12px;">📭</div>
+          <p style="font-size:15px;">История пуста</p>
+          <p style="font-size:13px;margin-top:6px;">После рассылки здесь появятся результаты</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION: Settings -->
+    <div class="section" id="section-settings">
+      <div class="mb-6">
+        <h1 style="font-size:26px;font-weight:800;color:#1e293b;">Настройки</h1>
+        <p style="color:#64748b;margin-top:4px;">Конфигурация приложения</p>
+      </div>
+      <div class="card p-6 mb-4">
+        <h2 style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:16px;">💾 Сохранённая сессия</h2>
+        <div id="sessionInfo" style="background:#f8fafc;border-radius:12px;padding:16px;font-size:13px;color:#64748b;font-family:monospace;word-break:break-all;margin-bottom:16px;">
+          Нет активной сессии
+        </div>
+        <div class="flex gap-3 flex-wrap">
+          <button onclick="exportSession()" style="background:#f1f5f9;color:#475569;border:none;border-radius:10px;padding:10px 20px;font-weight:600;cursor:pointer;font-size:13px;">
+            📤 Экспорт сессии
+          </button>
+          <button onclick="importSession()" style="background:#f1f5f9;color:#475569;border:none;border-radius:10px;padding:10px 20px;font-weight:600;cursor:pointer;font-size:13px;">
+            📥 Импорт сессии
+          </button>
+          <button onclick="clearSession()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:10px;padding:10px 20px;font-weight:600;cursor:pointer;font-size:13px;">
+            🗑 Сбросить сессию
+          </button>
+        </div>
+      </div>
+      <div class="card p-6">
+        <h2 style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:16px;">ℹ️ Информация</h2>
+        <div style="font-size:13px;color:#64748b;display:flex;flex-direction:column;gap:8px;">
+          <div>• Используется официальное MTProto API через <strong>@mtproto/core</strong></div>
+          <div>• Данные сессии хранятся в localStorage браузера</div>
+          <div>• API ID и Hash получить на <a href="https://my.telegram.org" target="_blank" style="color:#667eea;">my.telegram.org</a></div>
+          <div>• Рассылка отправляется от вашего личного аккаунта</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Import session modal -->
+<div class="modal" id="importModal" style="display:none;">
+  <div class="modal-backdrop" onclick="closeImportModal()"></div>
+  <div class="modal-box">
+    <button onclick="closeImportModal()" style="position:absolute;top:16px;right:16px;background:#f1f5f9;border:none;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:18px;color:#64748b;">✕</button>
+    <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:16px;">📥 Импорт сессии</h3>
+    <textarea class="input-field" id="importSessionText" placeholder="Вставьте строку сессии..." style="height:100px;"></textarea>
+    <div class="flex gap-3 mt-4">
+      <button onclick="closeImportModal()" style="background:#f1f5f9;color:#64748b;border:none;border-radius:10px;padding:12px 24px;font-weight:600;cursor:pointer;flex:1;">Отмена</button>
+      <button onclick="doImportSession()" class="gradient-btn text-white font-semibold py-3 px-6 rounded-xl" style="flex:2;">Импортировать</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast" style="display:none;"></div>
+
+<script type="module">
+  // ─────────────── IMPORTS ───────────────
+  let MTProto, getSRPParams;
+  let mtproto = null;
+  let isConnected = false;
+  let phoneCodeHash = null;
+  let currentPhone = null;
+  let recipients = [];
+  let broadcastRunning = false;
+  let broadcastStopped = false;
+  let broadcastHistory = [];
+
+  // Load @mtproto/core from CDN
+  async function loadMTProto() {
+    try {
+      const mod = await import('https://cdn.jsdelivr.net/npm/@mtproto/core@6.3.0/src/index.js');
+      MTProto = mod.default || mod.MTProto;
+      getSRPParams = mod.getSRPParams;
+      if (!MTProto) throw new Error('MTProto not found in module');
+      console.log('[MTProto] Loaded successfully');
+    } catch (e) {
+      console.error('[MTProto] Load error:', e);
+      // Fallback: try browser path
+      try {
+        const mod2 = await import('https://cdn.jsdelivr.net/npm/@mtproto/core@6.3.0/+esm');
+        MTProto = mod2.default || mod2.MTProto;
+        getSRPParams = mod2.getSRPParams;
+        console.log('[MTProto] Loaded via +esm');
+      } catch(e2) {
+        console.error('[MTProto] Fallback failed:', e2);
+        showToast('Ошибка загрузки библиотеки MTProto. Проверьте интернет.', 'error');
+      }
+    }
+  }
+
+  // ─────────────── INIT ───────────────
+  async function init() {
+    await loadMTProto();
+    loadSavedApiKeys();
+    updateSessionDisplay();
+    checkExistingSession();
+    document.getElementById('messageText').addEventListener('input', updateCharCount);
+  }
+
+  function loadSavedApiKeys() {
+    const savedId = localStorage.getItem('tg_api_id');
+    const savedHash = localStorage.getItem('tg_api_hash');
+    if (savedId) document.getElementById('apiId').value = savedId;
+    if (savedHash) document.getElementById('apiHash').value = savedHash;
+  }
+
+  function checkExistingSession() {
+    const savedId = localStorage.getItem('tg_api_id');
+    const savedHash = localStorage.getItem('tg_api_hash');
+    const hasSession = Object.keys(localStorage).some(k => k.startsWith('mtproto'));
+    if (savedId && savedHash && hasSession) {
+      tryAutoLogin(savedId, savedHash);
+    }
+  }
+
+  async function tryAutoLogin(apiId, apiHash) {
+    if (!MTProto) return;
+    try {
+      mtproto = new MTProto({ api_id: parseInt(apiId), api_hash: apiHash });
+      const user = await mtproto.call('users.getFullUser', { id: { _: 'inputUserSelf' } });
+      if (user) {
+        const u = user.users ? user.users[0] : user.user;
+        onConnected(u);
+      }
+    } catch(e) {
+      // Not logged in
+      console.log('[AutoLogin] Not logged in:', e.error_message || e);
+    }
+  }
+
+  // ─────────────── NAVIGATION ───────────────
+  window.showSection = function(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('section-' + name).classList.add('active');
+    document.getElementById('nav-' + name).classList.add('active');
+
+    if (name === 'broadcast') {
+      const show = isConnected;
+      document.getElementById('notConnectedWarn').style.display = show ? 'none' : 'block';
+      document.getElementById('broadcastForm').style.display = show ? 'block' : 'none';
+    }
+    closeSidebar();
+  };
+
+  window.toggleSidebar = function() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('overlay').classList.toggle('show');
+  };
+  window.closeSidebar = function() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('overlay').classList.remove('show');
+  };
+
+  // ─────────────── AUTH ───────────────
+  window.sendCode = async function() {
+    const apiId = document.getElementById('apiId').value.trim();
+    const apiHash = document.getElementById('apiHash').value.trim();
+    const phone = document.getElementById('phoneInput').value.trim();
+
+    if (!apiId || !apiHash) { showToast('Введите API ID и API Hash', 'error'); return; }
+    if (!phone) { showToast('Введите номер телефона', 'error'); return; }
+    if (!MTProto) { showToast('Библиотека MTProto не загружена', 'error'); return; }
+
+    localStorage.setItem('tg_api_id', apiId);
+    localStorage.setItem('tg_api_hash', apiHash);
+
+    const btn = document.getElementById('sendCodeBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="spin" style="display:inline;vertical-align:middle;margin-right:6px;" width="16" height="16" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Отправка...';
+
+    try {
+      mtproto = new MTProto({ api_id: parseInt(apiId), api_hash: apiHash });
+      currentPhone = phone;
+
+      let result;
+      try {
+        result = await mtproto.call('auth.sendCode', {
+          phone_number: phone,
+          settings: { _: 'codeSettings' }
+        });
+      } catch (err) {
+        if (err.error_message && err.error_message.includes('_MIGRATE_')) {
+          const dcId = parseInt(err.error_message.split('_MIGRATE_')[1]);
+          mtproto.setDefaultDc(dcId);
+          result = await mtproto.call('auth.sendCode', {
+            phone_number: phone,
+            settings: { _: 'codeSettings' }
+          });
+        } else throw err;
+      }
+
+      phoneCodeHash = result.phone_code_hash;
+      document.getElementById('phoneDisplay').textContent = phone;
+      document.getElementById('step-phone').style.display = 'none';
+      document.getElementById('step-code').style.display = 'block';
+      showToast('Код отправлен в Telegram!', 'success');
+    } catch (e) {
+      showToast('Ошибка: ' + (e.error_message || e.message || 'Не удалось отправить код'), 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Отправить код';
+    }
+  };
+
+  window.goBackPhone = function() {
+    document.getElementById('step-phone').style.display = 'block';
+    document.getElementById('step-code').style.display = 'none';
+    document.getElementById('step-2fa').style.display = 'none';
+  };
+
+  window.verifyCode = async function() {
+    const code = document.getElementById('codeInput').value.trim();
+    if (!code) { showToast('Введите код', 'error'); return; }
+
+    const btn = document.getElementById('verifyBtn');
+    btn.disabled = true;
+    btn.textContent = 'Проверка...';
+
+    try {
+      const result = await mtproto.call('auth.signIn', {
+        phone_number: currentPhone,
+        phone_code_hash: phoneCodeHash,
+        phone_code: code
+      });
+
+      const user = result.user || result;
+      onConnected(user);
+    } catch (e) {
+      if (e.error_message === 'SESSION_PASSWORD_NEEDED') {
+        document.getElementById('step-code').style.display = 'none';
+        document.getElementById('step-2fa').style.display = 'block';
+        showToast('Требуется пароль 2FA', 'info');
+      } else if (e.error_message === 'PHONE_CODE_INVALID') {
+        showToast('Неверный код. Попробуйте ещё раз', 'error');
+      } else {
+        showToast('Ошибка: ' + (e.error_message || e.message || 'Неизвестная ошибка'), 'error');
+      }
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Войти';
+    }
+  };
+
+  window.verify2FA = async function() {
+    const password = document.getElementById('passwordInput').value;
+    if (!password) { showToast('Введите пароль 2FA', 'error'); return; }
+
+    const btn = document.getElementById('twoFABtn');
+    btn.disabled = true;
+    btn.textContent = 'Проверка...';
+
+    try {
+      const pwdInfo = await mtproto.call('account.getPassword');
+      const { srp_id, current_algo, srp_B } = pwdInfo;
+      const { g, p, salt1, salt2 } = current_algo;
+      const { A, M1 } = await getSRPParams({ g, p, salt1, salt2, gB: srp_B, password });
+
+      const result = await mtproto.call('auth.checkPassword', {
+        password: { _: 'inputCheckPasswordSRP', srp_id, A, M1 }
+      });
+
+      onConnected(result.user || result);
+    } catch (e) {
+      showToast('Неверный пароль 2FA: ' + (e.error_message || e.message), 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Подтвердить';
+    }
+  };
+
+  function onConnected(user) {
+    isConnected = true;
+    const name = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Пользователь';
+    const phone = user.phone ? '+' + user.phone : '';
+
+    document.getElementById('connectedUser').textContent = name;
+    document.getElementById('connectedPhone').textContent = phone;
+    document.getElementById('phoneCard').style.display = 'none';
+    document.getElementById('connectedCard').style.display = 'block';
+
+    // Update sidebar status
+    const statusEl = document.getElementById('sidebarStatus');
+    statusEl.className = 'status-badge connected';
+    statusEl.innerHTML = '<div class="status-dot"></div><span>' + name + '</span>';
+
+    updateSessionDisplay();
+    showToast('Добро пожаловать, ' + name + '!', 'success');
+  }
+
+  window.logout = async function() {
+    try {
+      if (mtproto) await mtproto.call('auth.logOut');
+    } catch(e) {}
+    mtproto = null;
+    isConnected = false;
+    phoneCodeHash = null;
+    currentPhone = null;
+
+    document.getElementById('phoneCard').style.display = 'block';
+    document.getElementById('connectedCard').style.display = 'none';
+    document.getElementById('step-phone').style.display = 'block';
+    document.getElementById('step-code').style.display = 'none';
+    document.getElementById('step-2fa').style.display = 'none';
+    document.getElementById('phoneInput').value = '';
+    document.getElementById('codeInput').value = '';
+    document.getElementById('passwordInput').value = '';
+
+    const statusEl = document.getElementById('sidebarStatus');
+    statusEl.className = 'status-badge disconnected';
+    statusEl.innerHTML = '<div class="status-dot"></div><span>Не подключено</span>';
+
+    clearLocalSession();
+    updateSessionDisplay();
+    showToast('Вы вышли из аккаунта', 'info');
+  };
+
+  // ─────────────── RECIPIENTS ───────────────
+  window.handleRecipientKey = function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); addRecipient(); }
+  };
+
+  window.addRecipient = function() {
+    let val = document.getElementById('recipientInput').value.trim().replace(/^@/, '');
+    if (!val) return;
+    if (recipients.includes(val)) { showToast('@' + val + ' уже добавлен', 'info'); return; }
+    recipients.push(val);
+    document.getElementById('recipientInput').value = '';
+    renderTags();
+  };
+
+  window.removeRecipient = function(username) {
+    recipients = recipients.filter(r => r !== username);
+    renderTags();
+  };
+
+  window.clearRecipients = function() {
+    recipients = [];
+    renderTags();
+  };
+
+  function renderTags() {
+    const container = document.getElementById('recipientTags');
+    const noText = document.getElementById('noRecipientsText');
+    const countEl = document.getElementById('recipientCount');
+
+    if (recipients.length === 0) {
+      container.innerHTML = '<span style="color:#94a3b8;font-size:13px;align-self:center;" id="noRecipientsText">Нет получателей</span>';
+      countEl.textContent = '0 получателей';
+      return;
+    }
+
+    container.innerHTML = recipients.map(r => `
+      <div class="tag">
+        @${r}
+        <span class="remove" onclick="removeRecipient('${r}')">✕</span>
+      </div>
+    `).join('');
+    countEl.textContent = recipients.length + ' получател' + (recipients.length === 1 ? 'ь' : recipients.length < 5 ? 'я' : 'ей');
+  }
+
+  // ─────────────── BROADCAST ───────────────
+  window.startBroadcast = async function() {
+    if (!isConnected) { showToast('Сначала войдите в аккаунт', 'error'); return; }
+    if (recipients.length === 0) { showToast('Добавьте получателей', 'error'); return; }
+    const message = document.getElementById('messageText').value.trim();
+    if (!message) { showToast('Введите текст сообщения', 'error'); return; }
+
+    broadcastRunning = true;
+    broadcastStopped = false;
+
+    document.getElementById('sendBtn').style.display = 'none';
+    document.getElementById('stopBtn').style.display = 'inline-flex';
+    document.getElementById('progressWrap').style.removeProperty('display');
+    document.getElementById('progressWrap').style.display = 'block';
+    document.getElementById('logCard').style.display = 'block';
+    document.getElementById('logContainer').innerHTML = '';
+
+    const total = recipients.length;
+    let sent = 0, failed = 0;
+
+    const delayEnabled = document.getElementById('delayEnabled').checked;
+    const delayMs = parseInt(document.getElementById('delayMs').value) || 1000;
+
+    const historyEntry = {
+      date: new Date().toLocaleString('ru'),
+      message: message.slice(0, 80) + (message.length > 80 ? '...' : ''),
+      total, sent: 0, failed: 0, recipients: [...recipients]
+    };
+
+    for (let i = 0; i < recipients.length; i++) {
+      if (broadcastStopped) break;
+
+      const username = recipients[i];
+      updateProgress(i + 1, total, sent, failed);
+
+      try {
+        // Resolve user
+        const resolved = await mtproto.call('contacts.resolveUsername', { username });
+        const peer = resolved.peer;
+        const userId = peer.user_id;
+        const userObj = resolved.users.find(u => u.id === userId);
+
+        await mtproto.call('messages.sendMessage', {
+          peer: {
+            _: 'inputPeerUser',
+            user_id: userId,
+            access_hash: userObj.access_hash
+          },
+          message: message,
+          random_id: BigInt(Math.floor(Math.random() * 1e15)).toString()
+        });
+
+        sent++;
+        addLogEntry('✓ @' + username + ' — отправлено', 'ok');
+      } catch (e) {
+        failed++;
+        const errMsg = e.error_message || e.message || 'Ошибка';
+        addLogEntry('✗ @' + username + ' — ' + errMsg, 'err');
+      }
+
+      updateProgress(i + 1, total, sent, failed);
+      if (delayEnabled && i < recipients.length - 1 && !broadcastStopped) {
+        await sleep(delayMs);
+      }
+    }
+
+    historyEntry.sent = sent;
+    historyEntry.failed = failed;
+    broadcastHistory.unshift(historyEntry);
+    renderHistory();
+
+    broadcastRunning = false;
+    document.getElementById('sendBtn').style.display = 'inline-flex';
+    document.getElementById('stopBtn').style.display = 'none';
+
+    const status = broadcastStopped ? '⏹ Остановлено' : '✅ Завершено';
+    document.getElementById('progressLabel').textContent = status + ' — отправлено: ' + sent + '/' + total + ', ошибок: ' + failed;
+
+    showToast('Рассылка завершена: ' + sent + ' из ' + total, sent === total ? 'success' : 'info');
+  };
+
+  window.stopBroadcast = function() {
+    broadcastStopped = true;
+    broadcastRunning = false;
+    showToast('Рассылка остановлена', 'info');
+  };
+
+  function updateProgress(current, total, sent, failed) {
+    const pct = Math.round((current / total) * 100);
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = 'Отправка... ' + current + '/' + total;
+    document.getElementById('progressText').textContent = '✓ ' + sent + '  ✗ ' + failed;
+  }
+
+  function addLogEntry(text, type) {
+    const div = document.createElement('div');
+    div.className = 'log-entry log-' + type;
+    div.textContent = text;
+    const container = document.getElementById('logContainer');
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  window.clearLog = function() {
+    document.getElementById('logContainer').innerHTML = '';
+    document.getElementById('logCard').style.display = 'none';
+  };
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // ─────────────── HISTORY ───────────────
+  function renderHistory() {
+    const container = document.getElementById('historyContainer');
+    if (broadcastHistory.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center;padding:40px 0;color:#94a3b8;">
+          <div style="font-size:48px;margin-bottom:12px;">📭</div>
+          <p style="font-size:15px;">История пуста</p>
+          <p style="font-size:13px;margin-top:6px;">После рассылки здесь появятся результаты</p>
+        </div>`;
+      return;
+    }
+    container.innerHTML = broadcastHistory.map((h, i) => `
+      <div style="border:1px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:12px;">
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-2">
+          <span style="font-size:13px;color:#94a3b8;">${h.date}</span>
+          <div class="flex gap-2">
+            <span style="background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;">✓ ${h.sent}</span>
+            ${h.failed > 0 ? `<span style="background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;">✗ ${h.failed}</span>` : ''}
+          </div>
+        </div>
+        <p style="font-size:14px;color:#1e293b;margin-bottom:8px;font-weight:500;">"${h.message}"</p>
+        <div style="font-size:12px;color:#94a3b8;">${h.total} получателей: ${h.recipients.map(r=>'@'+r).join(', ')}</div>
+      </div>
+    `).join('');
+  }
+
+  // ─────────────── SESSION ───────────────
+  window.exportSession = function() {
+    const sessionData = {};
+    for (let k in localStorage) {
+      if (k.startsWith('mtproto') || k === 'tg_api_id' || k === 'tg_api_hash') {
+        sessionData[k] = localStorage.getItem(k);
+      }
+    }
+    const json = JSON.stringify(sessionData);
+    navigator.clipboard.writeText(json).then(() => {
+      showToast('Сессия скопирована в буфер обмена', 'success');
+    }).catch(() => {
+      prompt('Скопируйте строку сессии:', json);
+    });
+  };
+
+  window.importSession = function() {
+    document.getElementById('importModal').style.display = 'flex';
+  };
+  window.closeImportModal = function() {
+    document.getElementById('importModal').style.display = 'none';
+  };
+  window.doImportSession = function() {
+    try {
+      const text = document.getElementById('importSessionText').value.trim();
+      const data = JSON.parse(text);
+      for (let k in data) { localStorage.setItem(k, data[k]); }
+      closeImportModal();
+      showToast('Сессия импортирована. Обновите страницу.', 'success');
+      setTimeout(() => location.reload(), 1500);
+    } catch(e) {
+      showToast('Неверный формат сессии', 'error');
+    }
+  };
+
+  window.clearSession = function() {
+    if (!confirm('Сбросить сессию? Вы будете разлогинены.')) return;
+    clearLocalSession();
+    location.reload();
+  };
+
+  function clearLocalSession() {
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('mtproto'));
+    keys.forEach(k => localStorage.removeItem(k));
+  }
+
+  function updateSessionDisplay() {
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('mtproto'));
+    const el = document.getElementById('sessionInfo');
+    if (keys.length === 0) {
+      el.textContent = 'Нет активной сессии';
+    } else {
+      el.textContent = 'Сессия активна. Ключей: ' + keys.length + ' | API ID: ' + (localStorage.getItem('tg_api_id') || 'не задан');
+    }
+  }
+
+  // ─────────────── UI HELPERS ───────────────
+  window.updateCharCount = function() {
+    const len = document.getElementById('messageText').value.length;
+    document.getElementById('charCount').textContent = len + ' символов';
+  };
+
+  let toastTimer;
+  function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast toast-' + type;
+    t.style.display = 'block';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.style.display = 'none'; }, 3500);
+  }
+  window.showToast = showToast;
+
+  // Make functions global
+  window.addLogEntry = addLogEntry;
+
+  // ─────────────── START ───────────────
+  init();
+</script>
+</body>
+</html>
